@@ -7,7 +7,7 @@ module Main where
 --import      Block
 import TBlock --(Transaction, Block)
 
-data NetState = NetState [Block] [Transaction]
+data MinerState = MinerState [Block] [Transaction]
 
 f x = x + 1
 
