@@ -4,6 +4,7 @@ import MinerState
 import TBlock
 import Commiter
 import Sender
+import Explorer
 
 --Data.Text.Lazy.IO
 import Text.Read (readMaybe)
@@ -12,6 +13,7 @@ data Command
     = Exit_
     | Commit Transaction
     | BuildAndSend 
+    | Show 
 
 makeProgram :: a -> IO a
 makeProgram = return
@@ -28,11 +30,15 @@ handleBuild ms = ("Block is built.", Just (buildAndSendToNet ms))
 handleCommit :: Transaction -> Handler
 handleCommit t ms = ("Transaction is added to pending block.", Just (commitTransaction t ms))
 
+handleShow :: Handler
+handleShow ms = exploreNetwork ms
+
 handleCommand :: Command -> Handler
 handleCommand command = case command of
   Exit_ -> handleExit_
   BuildAndSend -> handleBuild
   Commit trans -> handleCommit trans
+  Show -> handleShow
         
 -- | Parse a task manager bot command.
 --
@@ -45,6 +51,7 @@ parseCommand input =
     case input of
         "exit" -> Just Exit_
         "build" -> Just BuildAndSend
+        "show" -> Just Show
         _ ->
             case words input of
                 ["commit", id_sender, id_reciver, amt] -> 

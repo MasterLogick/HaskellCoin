@@ -1,8 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.5.
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
+--
+-- hash: ee2e30aeef4a6414e995c82e603b95bf9733bdaf5631e7ab9015ebd32ec4e268
 
 name:           HaskellCoin
 version:        0.1.0.0
@@ -27,6 +29,7 @@ library
   exposed-modules:
       Commiter
       Console
+      Explorer
       MinerState
       Sender
       TBlock
