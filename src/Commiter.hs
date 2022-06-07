@@ -3,5 +3,5 @@ module Commiter where
 import MinerState
 import TBlock
 
-commitTransaction :: MinerState -> Transaction -> MinerState
-commitTransaction (MinerState blocks transactions) newTransaction = MinerState blocks (newTransaction:transactions)
+commitTransaction :: Transaction -> MinerState -> MinerState
+commitTransaction newTransaction (MinerState blocks transactions)  = MinerState blocks (newTransaction:transactions)

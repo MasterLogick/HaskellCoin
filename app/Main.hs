@@ -5,8 +5,7 @@
 {-# HLINT ignore "Redundant bracket" #-}
 module Main where
 
-run :: IO ()
-run = putStrLn "someFunc"
+import Console
 
 main :: IO ()
 main = run
