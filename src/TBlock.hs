@@ -2,7 +2,7 @@ module TBlock where
 
 data Block = Block PrevHash MinerHash Nonce TransCount TransList
 
-data Transaction = Transaction [(SenderHash, RecvHash, Amount)]
+data Transaction = Transaction SenderHash RecvHash Amount
 
 type SenderHash = BlockHash
 type RecvHash = BlockHash
