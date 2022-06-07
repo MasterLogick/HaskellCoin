@@ -1,5 +1,5 @@
 module Sender where
 
-import Main
+import MinerState
 
 buildAndSendToNet :: MinerState -> MinerState

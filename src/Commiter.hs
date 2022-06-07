@@ -1,5 +1,6 @@
 module Commiter where
 
-import Main
+import MinerState
 
 commitTransaction :: MinerState -> Transaction -> MinerState
+commitTransaction (MinerState blocks transactions) newTransaction = MinerState blocks newTransaction:transactions
