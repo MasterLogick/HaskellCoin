@@ -25,7 +25,7 @@ source-repository head
 
 library
   exposed-modules:
-      Block
+      TBlock
   other-modules:
       Paths_HaskellCoin
   hs-source-dirs:

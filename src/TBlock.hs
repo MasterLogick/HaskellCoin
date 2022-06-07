@@ -1,4 +1,4 @@
-module Block where
+module TBlock where
 
 data Block = Block PrevHash MinerHash Nonce TransCount TransList
 
