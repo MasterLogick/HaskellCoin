@@ -4,6 +4,8 @@ import Block
 
 data NetState = NetState [Block] [Trans]
 
+f x = x + 1
+
 run :: IO ()
 run = putStrLn "someFunc"
 
