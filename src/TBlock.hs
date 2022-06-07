@@ -11,5 +11,5 @@ type PrevHash = BlockHash
 type MinerHash = BlockHash
 type BlockHash = Integer
 type Nonce = Integer
-type TransCount = Integer
+type TransCount = Int
 type TransList = [Transaction]
