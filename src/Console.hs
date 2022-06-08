@@ -9,6 +9,14 @@ import Explorer
 --Data.Text.Lazy.IO
 import Text.Read (readMaybe)
 
+import System.IO
+
+prompt :: String -> IO String
+prompt text = do
+    putStr text
+    hFlush stdout
+    getLine
+
 data Command
     = Exit_
     | Commit Transaction
@@ -80,8 +88,8 @@ runWith
     -> (command -> state -> (String, Maybe state))
     -> IO () 
 runWith tasks parse handle = do
-    putStr "command> "
-    input <- getLine
+    input <- prompt "command> "
+     
     case parse input of
         Nothing -> do
             putStrLn "ERROR: unrecognized command"
