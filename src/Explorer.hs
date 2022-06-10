@@ -9,7 +9,7 @@ import TBlock
 
 getEnumeratedTransList :: Integer -> [Transaction] -> String
 getEnumeratedTransList _ [] = ""
-getEnumeratedTransList num ((Transaction senderHash recvHash amount): xs) = "~~~~~~~~~~~~~~~\nTransaction number: " ++ (show num) ++ "\nSender Hash: " ++ (show senderHash) ++ "\nRecv Hash: " ++ (show recvHash) ++ "\nAmount: " ++ (show amount) ++ "\n" ++ (getEnumeratedTransList (num + 1) xs)
+getEnumeratedTransList num ((Transaction senderHash recvHash amount _signature): xs) = "~~~~~~~~~~~~~~~\nTransaction number: " ++ (show num) ++ "\nSender Hash: " ++ (show senderHash) ++ "\nRecv Hash: " ++ (show recvHash) ++ "\nAmount: " ++ (show amount) ++ "\n" ++ (getEnumeratedTransList (num + 1) xs)
 
 getTransList :: [Transaction] -> String
 getTransList transList = getEnumeratedTransList 1 transList

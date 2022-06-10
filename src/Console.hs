@@ -71,7 +71,7 @@ parseCommand input =
                                 Just sender ->
                                     case readMaybe id_reciver of
                                         Nothing -> Nothing
-                                        Just reciver -> Just (Commit (Transaction sender reciver amount))
+                                        Just reciver -> Just (Commit (Transaction sender reciver amount 0))
                 _ -> Nothing
 
 -- | Init state of the system
