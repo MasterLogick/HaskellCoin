@@ -12,3 +12,6 @@ This is final project for the Haskell-course in Innopolis University, Summer 202
 3. Alexander Buchnev
 4. Elina Akimchenkova
 5. Nastya Barabanova
+
+#Contributing
+We are happy to receive bug reports, fixes, documentation enhancements, and other improvements.
