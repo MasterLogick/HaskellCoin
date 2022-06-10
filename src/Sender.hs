@@ -1,7 +1,14 @@
 module Sender where
 
+import Crypto.Hash
+import Data.ByteString
+
 import MinerState
 import TBlock 
+
+sha1 :: ByteString -> Digest SHA1
+sha1 = hash
+
 
 getLast :: [a] -> Maybe a
 getLast [] = Nothing
@@ -24,4 +31,4 @@ buildAndSendToNet (MinerState blockchain pending)
         hashedPrev = hashFunction (getLast blockchain)
 
         newBlock :: Block
-        newBlock = Block hashedPrev 0 0 (length pending) pending
+        newBlock = Block hashedPrev 0 0 (Prelude.length pending) pending

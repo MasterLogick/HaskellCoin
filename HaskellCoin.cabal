@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.34.5.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ee2e30aeef4a6414e995c82e603b95bf9733bdaf5631e7ab9015ebd32ec4e268
+-- hash: 3a4b14c8afd7ba4f352f7c4ba48a0a0c17447f76c033acf21fc875016d9208a5
 
 name:           HaskellCoin
 version:        0.1.0.0
@@ -39,6 +39,9 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , basement ==0.0.12
+    , bytestring ==0.11.3.1
+    , cryptonite ==0.30
     , text >=1.2.4.0
   default-language: Haskell2010
 
@@ -52,5 +55,8 @@ executable HaskellCoin-exe
   build-depends:
       HaskellCoin
     , base >=4.7 && <5
+    , basement ==0.0.12
+    , bytestring ==0.11.3.1
+    , cryptonite ==0.30
     , text >=1.2.4.0
   default-language: Haskell2010

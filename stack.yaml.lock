@@ -3,10 +3,45 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: cryptonite-0.30@sha256:12c85dea7be63e5ad90bcb487eb3846bf3c413347f94336fa1dede7b28f9936a,18301
+    pantry-tree:
+      size: 23323
+      sha256: df1cbe4cc40d569cc75ffed40bc5deac43cb085653980b42b9b6a5d4b745a30a
+  original:
+    hackage: cryptonite-0.30@sha256:12c85dea7be63e5ad90bcb487eb3846bf3c413347f94336fa1dede7b28f9936a,18301
+- completed:
+    hackage: bytestring-0.11.3.1@sha256:0cc97b237df9a34d12de37973ad306391e24b0c262387c4d846bb8d1d65699dd,7339
+    pantry-tree:
+      size: 3946
+      sha256: c0097091b5524b6ddb060829e06d44b321436052b4fcfb137c1ee5052c1d666b
+  original:
+    hackage: bytestring-0.11.3.1@sha256:0cc97b237df9a34d12de37973ad306391e24b0c262387c4d846bb8d1d65699dd,7339
+- completed:
+    hackage: text-2.0@sha256:86e64bc76fefb8f0f6529d28ddf24b2a29d43591a8b9b7c7094f481a0db2fb7d,7788
+    pantry-tree:
+      size: 7364
+      sha256: 894b84358fbad3cb8c16f224d3d8b7a1d7b6bcae68cda5a9998dd964904a6560
+  original:
+    hackage: text-2.0@sha256:86e64bc76fefb8f0f6529d28ddf24b2a29d43591a8b9b7c7094f481a0db2fb7d,7788
+- completed:
+    hackage: binary-0.8.9.0@sha256:9cac9a1d86bfa3e7f75cc8bffaa256f3967ebb6d76f67a42f9679384c5c5e18a,6523
+    pantry-tree:
+      size: 1976
+      sha256: 61308af6be2cdb6ba09390d35f3fa1ebb45e3af688bf04922658532398eaa276
+  original:
+    hackage: binary-0.8.9.0@sha256:9cac9a1d86bfa3e7f75cc8bffaa256f3967ebb6d76f67a42f9679384c5c5e18a,6523
+- completed:
+    hackage: basement-0.0.12@sha256:cbb9187d3575b78ee1165b7a49a0e8570ee563820330a944a67cd09e1cfe23bf,5516
+    pantry-tree:
+      size: 5859
+      sha256: 6462393c9058b93baea2c8ffb4a7e1d68c2aee14746ef0081dbb485a2faef71b
+  original:
+    hackage: basement-0.0.12
 snapshots:
 - completed:
-    sha256: 637fb77049b25560622a224845b7acfe81a09fdb6a96a3c75997a10b651667f6
     size: 534126
     url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/31.yaml
+    sha256: 637fb77049b25560622a224845b7acfe81a09fdb6a96a3c75997a10b651667f6
   original: lts-16.31
