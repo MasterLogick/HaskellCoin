@@ -4,7 +4,7 @@
 <img src="https://github.com/blackcater/blackcater/raw/main/images/Hi.gif" height="32"/></h1>
 
 # Motivation
-Haskell is a programming language that was designed for safety. This is the reason for it choice for the blockchain project.
+This is final project for the Haskell-course in Innopolis University, summer 2022
 
 # Our Team:
 1. Anton Nekhaev
