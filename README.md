@@ -11,4 +11,4 @@ Haskell is a programming language that was designed for safety. This is the reas
 2. Vladimir Surikov
 3. Alexander Buchnev
 4. Elina Akimchenkova
-5. Nastya Baranova
+5. Nastya Barabanova
