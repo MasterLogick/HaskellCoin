@@ -4,7 +4,7 @@
 <img src="https://github.com/blackcater/blackcater/raw/main/images/Hi.gif" height="32"/></h1>
 
 # Motivation
-This is final project for the Haskell-course in Innopolis University, summer 2022
+This is final project for the Haskell-course in Innopolis University, Summer 2022
 
 # Our Team:
 1. Anton Nekhaev
