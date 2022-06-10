@@ -1,6 +1,6 @@
 # HaskellCoin
 
-<h1 align="center">HaskellCoin>Daniil</a> 
+<h1 align="center">HaskellCoin></a> 
 <img src="https://github.com/blackcater/blackcater/raw/main/images/Hi.gif" height="32"/></h1>
 
  Motivation
