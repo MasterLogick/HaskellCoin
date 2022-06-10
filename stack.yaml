@@ -41,11 +41,10 @@ packages:
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
 #
 extra-deps:
-#- cryptonite-0.30@sha256:12c85dea7be63e5ad90bcb487eb3846bf3c413347f94336fa1dede7b28f9936a,18301
 - cryptonite-0.29@sha256:147724f6a8e4394fcbd51bf52aba7a8b92d3fc8f42055cd6ca9486655e2ab614,18312
 - bytestring-0.11.3.1@sha256:0cc97b237df9a34d12de37973ad306391e24b0c262387c4d846bb8d1d65699dd,7339
 - text-2.0@sha256:86e64bc76fefb8f0f6529d28ddf24b2a29d43591a8b9b7c7094f481a0db2fb7d,7788
-- binary-0.8.9.0@sha256:9cac9a1d86bfa3e7f75cc8bffaa256f3967ebb6d76f67a42f9679384c5c5e18a,6523
+- binary-0.8.8.0@sha256:e9387a7ef2b34c6a23b09664c306e37cc01ae2cb4e4511a1c96ffb14008c24b0,6262
 - basement-0.0.12 
 # Override default flag values for local packages and extra-deps
 # flags: {}

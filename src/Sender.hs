@@ -16,8 +16,8 @@ getLast (e:es) = getLast es
 
 blockHash :: Maybe Block -> BlockHash
 blockHash Nothing = 0
-blockHash (Just block) -- @(Block prevHash _minerHash _nonce _transCount _transList))
-    = sha1 (encode block)
+--blockHash (Just block) -- @(Block prevHash _minerHash _nonce _transCount _transList))
+--    = sha1 (encode block)
     -- = prevHash + 1
 
 buildAndSendToNet :: MinerState -> MinerState

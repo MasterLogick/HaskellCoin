@@ -39,7 +39,7 @@ handleCommit :: Transaction -> Handler
 handleCommit t ms = ("Transaction is added to pending block.", Just (commitTransaction t ms))
 
 handleShow :: Handler
-handleShow ms = exploreNetwork ms
+handleShow = exploreNetwork
 
 handleCommand :: Command -> Handler
 handleCommand command = case command of

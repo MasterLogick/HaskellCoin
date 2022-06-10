@@ -26,12 +26,12 @@ packages:
   original:
     hackage: text-2.0@sha256:86e64bc76fefb8f0f6529d28ddf24b2a29d43591a8b9b7c7094f481a0db2fb7d,7788
 - completed:
-    hackage: binary-0.8.9.0@sha256:9cac9a1d86bfa3e7f75cc8bffaa256f3967ebb6d76f67a42f9679384c5c5e18a,6523
+    hackage: binary-0.8.8.0@sha256:e9387a7ef2b34c6a23b09664c306e37cc01ae2cb4e4511a1c96ffb14008c24b0,6262
     pantry-tree:
       size: 1976
-      sha256: 61308af6be2cdb6ba09390d35f3fa1ebb45e3af688bf04922658532398eaa276
+      sha256: 271cd1e75af293fc25a489d860f094dc635a4ed8b56aa5b343c58f4637736ca3
   original:
-    hackage: binary-0.8.9.0@sha256:9cac9a1d86bfa3e7f75cc8bffaa256f3967ebb6d76f67a42f9679384c5c5e18a,6523
+    hackage: binary-0.8.8.0@sha256:e9387a7ef2b34c6a23b09664c306e37cc01ae2cb4e4511a1c96ffb14008c24b0,6262
 - completed:
     hackage: basement-0.0.12@sha256:cbb9187d3575b78ee1165b7a49a0e8570ee563820330a944a67cd09e1cfe23bf,5516
     pantry-tree:
