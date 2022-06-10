@@ -2,6 +2,7 @@ module Sender where
 
 import Crypto.Hash
 import Data.ByteString
+import Data.Binary
 
 import MinerState
 import TBlock 
