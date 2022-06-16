@@ -26,17 +26,17 @@ data Command
 makeProgram :: a -> IO a
 makeProgram = return
 
-type Handler = MinerState -> (String, Maybe MinerState)
+type Handler = MinerState -> (IO (), Maybe MinerState)
 
 
 handleExit_ :: Handler
-handleExit_ _ = ("Bye!", Nothing)
+handleExit_ _ = (putStrLn "Bye!", Nothing)
 
 handleBuild :: Handler
-handleBuild ms = ("Block is built.", Just (buildAndSendToNet ms))
+handleBuild ms = (putStrLn "Block is built.", Just (buildAndSendToNet ms))
 
 handleCommit :: Transaction -> Handler
-handleCommit t ms = ("Transaction is added to pending block.", Just (commitTransaction t ms))
+handleCommit t ms = (putStrLn  "Transaction is added to pending block.", Just (commitTransaction t ms))
 
 handleShow :: Handler
 handleShow = exploreNetwork
@@ -85,11 +85,10 @@ run = runWith initMinerState parseCommand handleCommand
 runWith
     :: state
     -> (String -> Maybe command)
-    -> (command -> state -> (String, Maybe state))
+    -> (command -> state -> (IO (), Maybe state))
     -> IO () 
 runWith tasks parse handle = do
     input <- prompt "command> "
-     
     case parse input of
         Nothing -> do
             putStrLn "ERROR: unrecognized command"
@@ -97,7 +96,7 @@ runWith tasks parse handle = do
         Just command' -> do
             case handle command' tasks of
                 (feedback, newTasks) -> do
-                    putStrLn feedback
+                    feedback
                     case newTasks of
                         Nothing -> return ()
                         Just newTasks' -> do

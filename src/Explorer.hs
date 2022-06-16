@@ -21,5 +21,5 @@ sumBlocksInfo :: [Block] -> String
 sumBlocksInfo [] = "\n"
 sumBlocksInfo (x: xs) = (getBlockInfo x) ++ "##################\n" ++ sumBlocksInfo xs 
 
-exploreNetwork :: MinerState -> (String, Maybe MinerState)
-exploreNetwork (MinerState blocks trans) = (sumBlocksInfo blocks, Just (MinerState blocks trans))
+exploreNetwork :: MinerState -> (IO (), Maybe MinerState)
+exploreNetwork (MinerState blocks trans) = (putStrLn $ sumBlocksInfo blocks, Just (MinerState blocks trans))
