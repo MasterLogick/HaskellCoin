@@ -22,9 +22,10 @@ blockHash Nothing = 0
     -- = prevHash + 1
 
 buildAndSendToNet :: MinerState -> MinerState
-buildAndSendToNet (MinerState blockchain pending)
-    = MinerState newChain [] 
+buildAndSendToNet state = state{blocks = newChain, pendingTransactions = []} 
     where
+        blockchain = blocks state
+        pending = pendingTransactions state
         newChain :: [Block]
         newChain = newBlock : blockchain
 
