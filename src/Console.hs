@@ -20,14 +20,8 @@ prompt text = do
 data Command
     = Exit_
     | Commit Transaction
-    | BuildAndSend 
-    | Show 
-
-makeProgram :: a -> IO a
-makeProgram = return
-
-type Handler = MinerState -> (IO (), Maybe MinerState)
-
+    | BuildAndSend
+    | Show
 
 handleExit_ :: Handler
 handleExit_ _ = (putStrLn "Bye!", Nothing)
