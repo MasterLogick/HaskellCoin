@@ -34,4 +34,6 @@ sumBlocksInfo (x: xs)
     ++ sumBlocksInfo xs 
 
 exploreNetwork :: Handler
-exploreNetwork state = (putStrLn $ sumBlocksInfo $ blocks $ state, Just state)
+exploreNetwork state = do
+    putStrLn $ sumBlocksInfo $ blocks $ state
+    return $ Just state

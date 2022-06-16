@@ -21,16 +21,18 @@ blockHash Nothing = 0
 --    = sha1 (encode block)
     -- = prevHash + 1
 
-buildAndSendToNet :: MinerState -> MinerState
-buildAndSendToNet state = state{blocks = newChain, pendingTransactions = []} 
-    where
-        blockchain = blocks state
-        pending = pendingTransactions state
-        newChain :: [Block]
-        newChain = newBlock : blockchain
+buildAndSendToNet :: Handler
+buildAndSendToNet state = do
+    putStrLn "Block is built."
+    return $ Just state{blocks = newChain, pendingTransactions = []} 
+        where
+           blockchain = blocks state
+           pending = pendingTransactions state
+           newChain :: [Block]
+           newChain = newBlock : blockchain
 
-        hashedPrev :: BlockHash
-        hashedPrev = blockHash (getLast blockchain)
+           hashedPrev :: BlockHash
+           hashedPrev = blockHash (getLast blockchain)
 
-        newBlock :: Block
-        newBlock = Block hashedPrev 0 0 (Prelude.length pending) pending
+           newBlock :: Block
+           newBlock = Block hashedPrev 0 0 (Prelude.length pending) pending

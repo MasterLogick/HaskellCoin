@@ -7,4 +7,4 @@ data MinerState = MinerState {
     pendingTransactions :: [Transaction]
 }
 
-type Handler = MinerState -> (IO (), Maybe MinerState)
+type Handler = MinerState -> IO (Maybe MinerState)

@@ -24,23 +24,16 @@ data Command
     | Show
 
 handleExit_ :: Handler
-handleExit_ _ = (putStrLn "Bye!", Nothing)
-
-handleBuild :: Handler
-handleBuild ms = (putStrLn "Block is built.", Just (buildAndSendToNet ms))
-
-handleCommit :: Transaction -> Handler
-handleCommit t ms = (putStrLn  "Transaction is added to pending block.", Just (commitTransaction t ms))
-
-handleShow :: Handler
-handleShow = exploreNetwork
+handleExit_ _ = do 
+    putStrLn "Bye!"
+    return Nothing
 
 handleCommand :: Command -> Handler
 handleCommand command = case command of
   Exit_ -> handleExit_
-  BuildAndSend -> handleBuild
-  Commit trans -> handleCommit trans
-  Show -> handleShow
+  BuildAndSend -> buildAndSendToNet
+  Commit trans -> commitTransaction trans
+  Show -> exploreNetwork
         
 -- | Parse a task manager bot command.
 --
@@ -79,7 +72,7 @@ run = runWith initMinerState parseCommand handleCommand
 runWith
     :: state
     -> (String -> Maybe command)
-    -> (command -> state -> (IO (), Maybe state))
+    -> (command -> state -> IO (Maybe state))
     -> IO () 
 runWith tasks parse handle = do
     input <- prompt "command> "
@@ -88,10 +81,8 @@ runWith tasks parse handle = do
             putStrLn "ERROR: unrecognized command"
             runWith tasks parse handle
         Just command' -> do
-            case handle command' tasks of
-                (feedback, newTasks) -> do
-                    feedback
-                    case newTasks of
-                        Nothing -> return ()
-                        Just newTasks' -> do
-                            runWith newTasks' parse handle
+            newState <- handle command' tasks
+            case newState of
+                Nothing -> return ()
+                Just newState' -> do
+                    runWith newState' parse handle
