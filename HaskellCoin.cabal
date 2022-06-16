@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 00dfa95c3de3f9b127654843ae7f1858d7843a877fccdc9e6b57eb12a5fda2ab
+-- hash: 875ea648c49a3624d3fc94760bb591f90ebe1372b8b943d65a025e8ad7412035
 
 name:           HaskellCoin
 version:        0.1.0.0
@@ -43,6 +43,8 @@ library
     , binary >=0.8.8.0
     , bytestring ==0.11.3.1
     , cryptonite >=0.29
+    , memory >=0.17.0
+    , network >=3.1.2.7
     , text >=1.2.4.0
   default-language: Haskell2010
 
@@ -60,5 +62,7 @@ executable HaskellCoin-exe
     , binary >=0.8.8.0
     , bytestring ==0.11.3.1
     , cryptonite >=0.29
+    , memory >=0.17.0
+    , network >=3.1.2.7
     , text >=1.2.4.0
   default-language: Haskell2010

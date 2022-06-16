@@ -1,14 +1,11 @@
 module Sender where
 
 import Crypto.Hash
-import Data.ByteString
+import qualified Data.ByteString as DBY
 import Data.Binary
-
+import Data.ByteArray
 import MinerState
 import TBlock 
-
-sha1 :: ByteString -> Digest SHA1
-sha1 = hash
 
 getLast :: [a] -> Maybe a
 getLast [] = Nothing
@@ -16,10 +13,9 @@ getLast [e] = Just e
 getLast (e:es) = getLast es
 
 blockHash :: Maybe Block -> BlockHash
-blockHash Nothing = 0
---blockHash (Just block) -- @(Block prevHash _minerHash _nonce _transCount _transList))
---    = sha1 (encode block)
-    -- = prevHash + 1
+blockHash Nothing = hashFunc $ DBY.toStrict $ Data.Binary.encode (0 :: Int) -- hash of (0 :: Int)
+blockHash (Just block)
+     = hashFunc (DBY.toStrict $ encode block)
 
 buildAndSendToNet :: Handler
 buildAndSendToNet state = do
@@ -35,4 +31,4 @@ buildAndSendToNet state = do
            hashedPrev = blockHash (getLast blockchain)
 
            newBlock :: Block
-           newBlock = Block hashedPrev 0 0 (Prelude.length pending) pending
+           newBlock = Block hashedPrev (blockHash Nothing) 0 (Prelude.length pending) pending
