@@ -6,9 +6,11 @@ import Control.Concurrent.MVar
 import Data.Binary
 import Data.ByteArray
 import Data.Maybe
+
 import MinerState
 import TBlock
 import CryptoMagic
+import NetworkMagic
 
 getLast :: [a] -> Maybe a
 getLast [] = Nothing
@@ -27,6 +29,7 @@ buildAndSendToNet stateRef = do
         let pending = pendingTransactions miner
         let hashedPrev :: BlockHash; hashedPrev = blockHash (listToMaybe $ Prelude.reverse $ blockchain)
         let newBlock :: Block; newBlock = Block hashedPrev (blockHash Nothing) 0 (Prelude.length pending) pending
+        propagateBlockToNet stateRef
         let newChain :: [Block]; newChain = newBlock : blockchain
         return (miner{blocks = newChain, pendingTransactions = []}, ())
         )

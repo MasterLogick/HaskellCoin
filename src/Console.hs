@@ -10,6 +10,7 @@ import TBlock
 import Commiter
 import Sender
 import Explorer
+import NetworkMagic
 
 
 prompt :: String -> IO String
@@ -23,6 +24,7 @@ data Command
     | Commit Transaction
     | BuildAndSend
     | Show
+    | Connect String String
 
 handleExit_ :: Handler
 handleExit_ stateRef = do
@@ -36,6 +38,7 @@ handleCommand command = case command of
   BuildAndSend -> buildAndSendToNet
   Commit trans -> commitTransaction trans
   Show -> exploreNetwork
+  Connect ip port -> connectAndSync ip port 
 
 parseCommand :: String -> Maybe Command
 parseCommand input =
@@ -55,12 +58,14 @@ parseCommand input =
                                     case readMaybe id_reciver of
                                         Nothing -> Nothing
                                         Just reciver -> Just (Commit (Transaction sender reciver amount 0))
+                ["connect", ip, port] ->
+                    Just (Connect ip port)
                 _ -> Nothing
 
 -- | Default entry point.
 run :: IO ()
 run = do
-    initMinerState' <- newMVar (MinerState [] [] False)
+    initMinerState' <- newMVar (MinerState [] [] [] False)
     mainLoop initMinerState' parseCommand handleCommand
 
 mainLoop
