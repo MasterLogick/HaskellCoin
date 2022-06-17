@@ -7,7 +7,8 @@ import Data.Binary
 import Data.ByteArray
 import Data.Maybe
 import MinerState
-import TBlock 
+import TBlock
+import CryptoMagic
 
 getLast :: [a] -> Maybe a
 getLast [] = Nothing
