@@ -2,8 +2,10 @@ module Sender where
 
 import Crypto.Hash
 import qualified Data.ByteString as DBY
+import Control.Concurrent.MVar
 import Data.Binary
 import Data.ByteArray
+import Data.Maybe
 import MinerState
 import TBlock 
 
@@ -18,17 +20,13 @@ blockHash (Just block)
      = hashFunc (DBY.toStrict $ encode block)
 
 buildAndSendToNet :: Handler
-buildAndSendToNet state = do
+buildAndSendToNet stateRef = do
+    modifyMVar stateRef (\miner -> do
+        let blockchain = blocks miner
+        let pending = pendingTransactions miner
+        let hashedPrev :: BlockHash; hashedPrev = blockHash (listToMaybe $ Prelude.reverse $ blockchain)
+        let newBlock :: Block; newBlock = Block hashedPrev (blockHash Nothing) 0 (Prelude.length pending) pending
+        let newChain :: [Block]; newChain = newBlock : blockchain
+        return (miner{blocks = newChain, pendingTransactions = []}, ())
+        )
     putStrLn "Block is built."
-    return $ Just state{blocks = newChain, pendingTransactions = []} 
-        where
-           blockchain = blocks state
-           pending = pendingTransactions state
-           newChain :: [Block]
-           newChain = newBlock : blockchain
-
-           hashedPrev :: BlockHash
-           hashedPrev = blockHash (getLast blockchain)
-
-           newBlock :: Block
-           newBlock = Block hashedPrev (blockHash Nothing) 0 (Prelude.length pending) pending

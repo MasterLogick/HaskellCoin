@@ -1,10 +1,13 @@
 module MinerState where
 
+import Control.Concurrent.MVar
+
 import TBlock
 
 data MinerState = MinerState {
     blocks :: [Block],
-    pendingTransactions :: [Transaction]
+    pendingTransactions :: [Transaction],
+    shouldExit :: Bool
 }
 
-type Handler = MinerState -> IO (Maybe MinerState)
+type Handler = MVar MinerState -> IO ()

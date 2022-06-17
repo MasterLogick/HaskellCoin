@@ -1,15 +1,16 @@
 module Console where
 
+--Data.Text.Lazy.IO
+import Text.Read (readMaybe)
+import Control.Concurrent.MVar
+import System.IO
+
 import MinerState
 import TBlock
 import Commiter
 import Sender
 import Explorer
 
---Data.Text.Lazy.IO
-import Text.Read (readMaybe)
-
-import System.IO
 
 prompt :: String -> IO String
 prompt text = do
@@ -24,9 +25,10 @@ data Command
     | Show
 
 handleExit_ :: Handler
-handleExit_ _ = do 
+handleExit_ stateRef = do
+    modifyMVar stateRef (\miner -> 
+        return (miner{shouldExit = True},())) 
     putStrLn "Bye!"
-    return Nothing
 
 handleCommand :: Command -> Handler
 handleCommand command = case command of
@@ -34,13 +36,7 @@ handleCommand command = case command of
   BuildAndSend -> buildAndSendToNet
   Commit trans -> commitTransaction trans
   Show -> exploreNetwork
-        
--- | Parse a task manager bot command.
---
--- >>> parseCommand "/done 3"
--- Just (RemoveTask 3)
--- >>> parseCommand "/done 1 2 3"
--- Nothing
+
 parseCommand :: String -> Maybe Command
 parseCommand input =
     case input of
@@ -61,28 +57,27 @@ parseCommand input =
                                         Just reciver -> Just (Commit (Transaction sender reciver amount 0))
                 _ -> Nothing
 
--- | Init state of the system
-initMinerState :: MinerState
-initMinerState = MinerState [] []
-
 -- | Default entry point.
 run :: IO ()
-run = runWith initMinerState parseCommand handleCommand
+run = do
+    initMinerState' <- newMVar (MinerState [] [] False)
+    mainLoop initMinerState' parseCommand handleCommand
 
-runWith
-    :: state
-    -> (String -> Maybe command)
-    -> (command -> state -> IO (Maybe state))
-    -> IO () 
-runWith tasks parse handle = do
+mainLoop
+    :: MVar MinerState
+    -> (String -> Maybe Command)
+    -> (Command -> Handler)
+    -> IO ()
+mainLoop stateRef parser handler = do
     input <- prompt "command> "
-    case parse input of
+    case parser input of
         Nothing -> do
             putStrLn "ERROR: unrecognized command"
-            runWith tasks parse handle
-        Just command' -> do
-            newState <- handle command' tasks
-            case newState of
-                Nothing -> return ()
-                Just newState' -> do
-                    runWith newState' parse handle
+            mainLoop stateRef parser handler
+        Just command -> do
+            handler command stateRef
+            miner <- readMVar stateRef
+            if shouldExit miner then 
+                return ()
+            else
+                mainLoop stateRef parser handler

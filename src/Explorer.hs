@@ -1,10 +1,9 @@
 module Explorer where
 
+import Control.Concurrent.MVar
+
 import MinerState
 import TBlock
-
-
--- data Transaction = Transaction SenderHash RecvHash Amount
 
 
 getEnumeratedTransList :: Integer -> [Transaction] -> String
@@ -34,6 +33,7 @@ sumBlocksInfo (x: xs)
     ++ sumBlocksInfo xs 
 
 exploreNetwork :: Handler
-exploreNetwork state = do
-    putStrLn $ sumBlocksInfo $ blocks $ state
-    return $ Just state
+exploreNetwork stateRef = do
+    miner <- readMVar stateRef
+    putStrLn $ sumBlocksInfo $ blocks $ miner
+    return ()
