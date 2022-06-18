@@ -11,7 +11,7 @@ This project can be build with Cabal and GHC 8.10.7 or with Stack tool. We recom
 
 # MVP features
 Minimal blockchain system, the whole chain runs on one local machine without any
-user interaction, minimal prerequisites for secure digital signatures and hashing.
+user interaction, includes check-up operations, minimal prerequisites for secure digital signatures and hashing.
 ### Additional:
 • CLI command line chain explorer
 
@@ -20,6 +20,8 @@ user interaction, minimal prerequisites for secure digital signatures and hashin
 • Secure digital signature (probably modified NTRUsign) 
 
 • Blockchain dumper
+
+• Digital signature for every user
 
 # Our Team:
 1. Anton Nekhaev
