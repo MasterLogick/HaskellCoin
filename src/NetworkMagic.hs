@@ -134,6 +134,8 @@ tryHandle stateRef user newState = do
                 Left (_, _, nerr) -> do
                     return newState
                 Right (remainder', _, block') -> do
+                    peerName <- getPeerName $ nuSocket $ user
+                    putStrLn $ "Got new block from " ++ (show $ peerName)
                     modifyMVar stateRef (\miner -> return (miner{ blocks = (block':(blocks miner)) }, newState{ nuBuffer = remainder' }))
 
 

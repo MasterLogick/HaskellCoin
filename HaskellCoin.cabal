@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.5.
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c3890739c0a3acbfcac38832cc0b64f086697b24639d047051084c696791acba
+-- hash: e01b1d500cd8e046dd13adcd4ba98f4a4c1bd028493f6ab93dee7c74b25679dd
 
 name:           HaskellCoin
 version:        0.1.0.0
@@ -32,6 +32,7 @@ library
       Console
       CryptoMagic
       Explorer
+      HelpCommand
       MinerState
       NetworkMagic
       Sender
