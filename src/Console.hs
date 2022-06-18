@@ -3,6 +3,8 @@ module Console where
 import Text.Read (readMaybe)
 import Control.Concurrent.MVar
 import System.IO
+import Network.Socket
+
 import MinerState
 import TBlock
 import Commiter
@@ -24,6 +26,7 @@ data Command
     | BuildAndSend
     | Show
     | Connect String String
+    | StartServer String String
 
 -- | Exit from programm
 handleExit_ :: Handler
@@ -40,6 +43,7 @@ handleCommand command = case command of
   Commit trans -> commitTransaction trans
   Show -> exploreNetwork
   Connect ip port -> connectAndSync ip port 
+  StartServer ip port -> setupServer ip port
 
 -- | Parsing of command.
 parseCommand :: String -> Maybe Command
@@ -62,11 +66,13 @@ parseCommand input =
                                         Just reciver -> Just (Commit (Transaction sender reciver amount 0))
                 ["connect", ip, port] ->
                     Just (Connect ip port)
+                ["start", "server", ip, port] ->
+                    Just (StartServer ip port)
                 _ -> Nothing
 
 -- | Default entry point.
 run :: IO ()
-run = do
+run = withSocketsDo $ do
     initMinerState' <- newMVar (MinerState [] [] [] False)
     mainLoop initMinerState' parseCommand handleCommand
 
