@@ -14,8 +14,11 @@ Minimal blockchain system, the whole chain runs on one local machine without any
 user interaction, minimal prerequisites for secure digital signatures and hashing.
 ### Additional:
 • CLI command line chain explorer
+
 • PoW (Proof of Work)
+
 • Secure digital signature (probably modified NTRUsign) 
+
 • Blockchain dumper
 
 # Our Team:
