@@ -24,13 +24,13 @@ blockHash (Just block)
 
 buildAndSendToNet :: Handler
 buildAndSendToNet stateRef = do
-    modifyMVar stateRef (\miner -> do
-        let blockchain = blocks miner
-        let pending = pendingTransactions miner
+    modifyMVar stateRef (\minerState -> do
+        let blockchain = blocks minerState
+        let pending = pendingTransactions minerState
         let hashedPrev :: BlockHash; hashedPrev = blockHash (listToMaybe $ Prelude.reverse $ blockchain)
         let newBlock :: Block; newBlock = Block hashedPrev (blockHash Nothing) 0 (Prelude.length pending) pending
         propagateBlockToNet stateRef
         let newChain :: [Block]; newChain = newBlock : blockchain
-        return (miner{blocks = newChain, pendingTransactions = []}, ())
+        return (minerState{blocks = newChain, pendingTransactions = []}, ())
         )
     putStrLn "Block is built."
