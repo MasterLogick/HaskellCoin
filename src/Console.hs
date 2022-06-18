@@ -12,6 +12,7 @@ import Sender
 import Explorer
 import NetworkMagic
 import AccountBalance
+import HelpCommand
 
 -- | Output and input in concole with prompt.
 prompt :: String -> IO String
@@ -29,6 +30,7 @@ data Command
     | Connect String String
     | Balance SenderHash
     | StartServer String String
+    | Help
 
 -- | Exit from programm
 handleExit_ :: Handler
@@ -47,6 +49,7 @@ handleCommand command = case command of
   Connect ip port -> connectAndSync ip port 
   Balance id_sender -> userBalance id_sender
   StartServer ip port -> setupServer ip port
+  Help -> printHelp
 
 
 -- | Parsing of command.
@@ -56,6 +59,7 @@ parseCommand input =
         "exit" -> Just Exit_
         "build" -> Just BuildAndSend
         "show" -> Just Show
+        "help" -> Just Help
         _ ->
             case words input of
                 ["commit", id_sender, id_reciver, amt] -> 
