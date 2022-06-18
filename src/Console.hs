@@ -11,6 +11,7 @@ import Commiter
 import Sender
 import Explorer
 import NetworkMagic
+import Balance
 
 
 prompt :: String -> IO String
@@ -25,6 +26,7 @@ data Command
     | BuildAndSend
     | Show
     | Connect String String
+    | Balance SenderHash
 
 handleExit_ :: Handler
 handleExit_ stateRef = do
@@ -39,6 +41,7 @@ handleCommand command = case command of
   Commit trans -> commitTransaction trans
   Show -> exploreNetwork
   Connect ip port -> connectAndSync ip port 
+  Balance id_sender -> userBalance id_sender
 
 parseCommand :: String -> Maybe Command
 parseCommand input =
@@ -60,6 +63,11 @@ parseCommand input =
                                         Just reciver -> Just (Commit (Transaction sender reciver amount 0))
                 ["connect", ip, port] ->
                     Just (Connect ip port)
+                ["balance", idSender] ->
+                    case readMaybe idSender of
+                        Nothing -> Nothing
+                        Just id_sender -> Just (Balance id_sender)
+                    -- Just (Balance id_sender)
                 _ -> Nothing
 
 -- | Default entry point.
