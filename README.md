@@ -13,7 +13,10 @@ This project can be build with Cabal and GHC 8.10.7 or with Stack tool. We recom
 Minimal blockchain system, the whole chain runs on one local machine without any
 user interaction, minimal prerequisites for secure digital signatures and hashing.
 ### Additional:
-CLI, command line chain explorer, PoW (Proof of Work), secure digital signature (probably modified NTRUsign), blockchain dumper.
+• CLI command line chain explorer
+• PoW (Proof of Work)
+• Secure digital signature (probably modified NTRUsign) 
+• Blockchain dumper
 
 # Our Team:
 1. Anton Nekhaev
