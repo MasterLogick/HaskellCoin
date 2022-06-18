@@ -12,16 +12,20 @@ import TBlock
 import CryptoMagic
 import NetworkMagic
 
+-- | Function getLast gets the last list item
 getLast :: [a] -> Maybe a
 getLast [] = Nothing
 getLast [e] = Just e
 getLast (e:es) = getLast es
 
+-- | function blockHash hashes the block
 blockHash :: Maybe Block -> BlockHash
 blockHash Nothing = hashFunc $ DBY.toStrict $ Data.Binary.encode (0 :: Int) -- hash of (0 :: Int)
 blockHash (Just block)
      = hashFunc (DBY.toStrict $ encode block)
 
+-- | function buildAndSendToNet builds and sends a block into the network
+-- | and as a result, the line that the block is built
 buildAndSendToNet :: Handler
 buildAndSendToNet stateRef = do
     modifyMVar stateRef (\minerState -> do
