@@ -6,6 +6,15 @@
 # Motivation
 This is final project for the Haskell-course in Innopolis University, Summer 2022
 
+# Prerequisites
+This project can be build with Cabal and GHC 8.10.7 or with Stack tool. We recommend that you use ghcup to install these.
+
+# MVP features
+Minimal blockchain system, the whole chain runs on one local machine without any
+user interaction, minimal prerequisites for secure digital signatures and hashing.
+### Additional:
+CLI, command line chain explorer, PoW (Proof of Work), secure digital signature (probably modified NTRUsign), blockchain dumper.
+
 # Our Team:
 1. Anton Nekhaev
 2. Vladimir Surikov
@@ -16,5 +25,3 @@ This is final project for the Haskell-course in Innopolis University, Summer 202
 # Contributing
 We are happy to receive bug reports, fixes, documentation enhancements, and other improvements.
 
-# Prerequisites
-This project can be build with Cabal and GHC 8.10.7 or with Stack tool. We recommend that you use ghcup to install these.
