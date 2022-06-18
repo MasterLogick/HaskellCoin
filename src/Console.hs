@@ -4,6 +4,7 @@ module Console where
 import Text.Read (readMaybe)
 import Control.Concurrent.MVar
 import System.IO
+import Network.Socket
 
 import MinerState
 import TBlock
@@ -25,6 +26,7 @@ data Command
     | BuildAndSend
     | Show
     | Connect String String
+    | StartServer String String
 
 handleExit_ :: Handler
 handleExit_ stateRef = do
@@ -39,6 +41,7 @@ handleCommand command = case command of
   Commit trans -> commitTransaction trans
   Show -> exploreNetwork
   Connect ip port -> connectAndSync ip port 
+  StartServer ip port -> setupServer ip port
 
 parseCommand :: String -> Maybe Command
 parseCommand input =
@@ -60,11 +63,13 @@ parseCommand input =
                                         Just reciver -> Just (Commit (Transaction sender reciver amount 0))
                 ["connect", ip, port] ->
                     Just (Connect ip port)
+                ["start", "server", ip, port] ->
+                    Just (StartServer ip port)
                 _ -> Nothing
 
 -- | Default entry point.
 run :: IO ()
-run = do
+run = withSocketsDo $ do
     initMinerState' <- newMVar (MinerState [] [] [] False)
     mainLoop initMinerState' parseCommand handleCommand
 
