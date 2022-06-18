@@ -28,7 +28,6 @@ source-repository head
 library
   exposed-modules:
       Commiter
-      ConcurrentMagic
       Console
       CryptoMagic
       Explorer
