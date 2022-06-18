@@ -11,7 +11,7 @@ import Commiter
 import Sender
 import Explorer
 import NetworkMagic
-import Balance
+import AccountBalance
 
 -- | Output and input in concole with prompt.
 prompt :: String -> IO String

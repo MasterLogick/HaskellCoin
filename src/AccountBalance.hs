@@ -1,4 +1,4 @@
-module Balance where
+module AccountBalance where
 
 import Control.Concurrent.MVar
 
