@@ -8,16 +8,6 @@ import CryptoMagic
 -- | amount of transactions and list of all transactions that corespond to this block
 data Block = Block PrevHash MinerHash Nonce TransCount TransList
 
--- | 'getMany n' get 'n' elements in order, without blowing the stack.
-getMany :: Binary a => Int -> Get [a]
-getMany n = go [] n
- where
-    go xs 0 = return $! reverse xs
-    go xs i = do x <- get
-                 -- we must seq x to avoid stack overflows due to laziness in
-                 -- (>>=)
-                 x `seq` go (x:xs) (i-1)
-
 -- | this instance is neccessary for converting block into bytes and also bytes into data block                 
 instance Binary Block where
     put (Block prevHash minerHash nonce transCount transList) = do
@@ -32,7 +22,7 @@ instance Binary Block where
         minerHash <- get :: Get MinerHash
         nonce <- get :: Get Nonce
         transCount <- get :: Get TransCount
-        transList <- getMany transCount :: Get TransList
+        transList <- get :: Get TransList
         return (Block prevHash minerHash nonce transCount transList)
 
 -- | data Transaction stores information about sender, recipient, amount of transaction
