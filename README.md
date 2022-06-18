@@ -21,7 +21,7 @@ user interaction, includes check-up operations, minimal prerequisites for secure
 
 • Blockchain dumper
 
-• Digital signature for every user
+• Digital signature for every user (ECDSA on Edwards25519)
 
 # Our Team:
 1. Anton Nekhaev
