@@ -27,11 +27,8 @@ data Command
     | BuildAndSend
     | Show
     | Connect String String
-<<<<<<< HEAD
     | Balance SenderHash
-=======
     | StartServer String String
->>>>>>> 777f30b3f6e9adc46d7d717753a2b6b742380264
 
 -- | Exit from programm
 handleExit_ :: Handler
@@ -48,11 +45,9 @@ handleCommand command = case command of
   Commit trans -> commitTransaction trans
   Show -> exploreNetwork
   Connect ip port -> connectAndSync ip port 
-<<<<<<< HEAD
   Balance id_sender -> userBalance id_sender
-=======
   StartServer ip port -> setupServer ip port
->>>>>>> 777f30b3f6e9adc46d7d717753a2b6b742380264
+
 
 -- | Parsing of command.
 parseCommand :: String -> Maybe Command
