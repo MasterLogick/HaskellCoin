@@ -67,10 +67,10 @@ setupServer ip port stateRef = do
     let hints = defaultHints { addrFlags = [AI_NUMERICHOST, AI_NUMERICSERV], addrSocketType = Stream }
     addr:_ <- getAddrInfo (Just hints) (Just ip) (Just port)
     serverSocket <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
+    setSocketOption serverSocket ReuseAddr 1
     bind serverSocket (addrAddress addr)
     listen serverSocket 1024
     putStrLn $ "Start listening for connections on " ++ (show $ addrAddress $ addr)
-    setSocketOption serverSocket ReuseAddr 1
     forkIO $ (serverHandleLoop stateRef serverSocket)
     return ()
 
