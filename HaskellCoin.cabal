@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.34.5.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: dab43a28054562cd61e5e37050e5b36175d62faa4de17779661dbfa592785693
+-- hash: 30df275351d7b13ff220532b26d1d6ce6b9b2e23cc4855c052e1d56894c2d1e0
 
 name:           HaskellCoin
 version:        0.1.0.0

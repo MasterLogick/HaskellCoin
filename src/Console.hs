@@ -1,9 +1,9 @@
 module Console where
 
---Data.Text.Lazy.IO
 import Text.Read (readMaybe)
 import Control.Concurrent.MVar
 import System.IO
+import Network.Socket
 
 import MinerState
 import TBlock
@@ -13,27 +13,34 @@ import Explorer
 import NetworkMagic
 import Balance
 
-
+-- | Output and input in concole with prompt.
 prompt :: String -> IO String
 prompt text = do
     putStr text
     hFlush stdout
     getLine
 
+-- | Types of commands
 data Command
     = Exit_
     | Commit Transaction
     | BuildAndSend
     | Show
     | Connect String String
+<<<<<<< HEAD
     | Balance SenderHash
+=======
+    | StartServer String String
+>>>>>>> 777f30b3f6e9adc46d7d717753a2b6b742380264
 
+-- | Exit from programm
 handleExit_ :: Handler
 handleExit_ stateRef = do
     modifyMVar stateRef (\miner -> 
         return (miner{shouldExit = True},())) 
     putStrLn "Bye!"
 
+-- | Handling of command.
 handleCommand :: Command -> Handler
 handleCommand command = case command of
   Exit_ -> handleExit_
@@ -41,8 +48,13 @@ handleCommand command = case command of
   Commit trans -> commitTransaction trans
   Show -> exploreNetwork
   Connect ip port -> connectAndSync ip port 
+<<<<<<< HEAD
   Balance id_sender -> userBalance id_sender
+=======
+  StartServer ip port -> setupServer ip port
+>>>>>>> 777f30b3f6e9adc46d7d717753a2b6b742380264
 
+-- | Parsing of command.
 parseCommand :: String -> Maybe Command
 parseCommand input =
     case input of
@@ -68,14 +80,17 @@ parseCommand input =
                         Nothing -> Nothing
                         Just id_sender -> Just (Balance id_sender)
                     -- Just (Balance id_sender)
+                ["start", "server", ip, port] ->
+                    Just (StartServer ip port)
                 _ -> Nothing
 
 -- | Default entry point.
 run :: IO ()
-run = do
+run = withSocketsDo $ do
     initMinerState' <- newMVar (MinerState [] [] [] False)
     mainLoop initMinerState' parseCommand handleCommand
 
+-- | Processing of commands.
 mainLoop
     :: MVar MinerState
     -> (String -> Maybe Command)
