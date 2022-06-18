@@ -14,7 +14,7 @@ getTransactionBalance id_sender (Transaction senderHash recvHash amount _)
 
 getBalanceBlock :: SenderHash -> TransList -> Amount
 getBalanceBlock _ [] = 0
-getBalanceBlock id_sender (transition: transList) = getTransactionBalance id_sender transition
+getBalanceBlock id_sender (transition: transList) = getTransactionBalance id_sender transition + getBalanceBlock id_sender transList
 
 
 getBalance :: SenderHash -> [Block] -> Amount
