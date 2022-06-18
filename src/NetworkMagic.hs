@@ -70,6 +70,7 @@ setupServer ip port stateRef = do
     bind serverSocket (addrAddress addr)
     listen serverSocket 1024
     putStrLn $ "Start listening for connections on " ++ (show $ addrAddress $ addr)
+    setSocketOption serverSocket ReuseAddr 1
     forkIO $ (serverHandleLoop stateRef serverSocket)
     return ()
 
@@ -85,6 +86,8 @@ clientInputHandleLoop stateRef user = do
     shouldStop <- modifyMVar (nuState user) (\state -> do
             chunk <- recv (nuSocket user) 1024
             if (LB.null chunk) then do
+                peerName <- getPeerName $ nuSocket $ user
+                putStrLn $ "Connection to " ++ (show $ peerName) ++ " lost"
                 modifyMVar stateRef (\minerState -> 
                     return (minerState{ network = 
                         filter (\x -> (nuSocket user) /= (nuSocket x)) (network minerState)
@@ -95,10 +98,10 @@ clientInputHandleLoop stateRef user = do
                 let newBuff = LB.append (nuBuffer state) chunk
                 let newState = state{ nuBuffer = newBuff }
                 if (nuService state) then
-                    return (newState, True)
+                    return (newState, False)
                 else do
                     updatedState <- tryHandle stateRef user newState
-                    return (updatedState, True)
+                    return (updatedState, False)
                 )
     unless shouldStop (clientInputHandleLoop stateRef user)
 
@@ -124,15 +127,19 @@ tryHandle stateRef user newState = do
     let request :: Either (LB.ByteString, ByteOffset, String) (LB.ByteString, ByteOffset, String); request = decodeOrFail (nuBuffer newState)
     case request of
         Left (_, _, err) -> do
-            putStrLn $ "Can not handle: " ++ err
-        Right (_, _, val) -> do
-            putStrLn $ "Parsed: " ++ val
-    return newState
+            return newState
+        Right (remainder, _, "New block") -> do
+            let block :: Either (LB.ByteString, ByteOffset, String) (LB.ByteString, ByteOffset, Block); block = decodeOrFail remainder
+            case block of
+                Left (_, _, nerr) -> do
+                    return newState
+                Right (remainder', _, block') -> do
+                    modifyMVar stateRef (\miner -> return (miner{ blocks = (block':(blocks miner)) }, newState{ nuBuffer = remainder' }))
 
 
 
-propagateBlockToNet :: Handler
-propagateBlockToNet stateRef = do
+propagateLastBlockToNet :: Handler
+propagateLastBlockToNet stateRef = do
     forkIO (modifyMVar stateRef (\miner -> do
         let net = network miner
         case listToMaybe $ blocks $ miner of
@@ -147,15 +154,13 @@ propagateBlockToNet stateRef = do
 
 
 
-
 sendBlock :: MVar MinerState -> Block -> NetUser -> IO ()
-sendBlock stateRef block user = withService stateRef user $ do
+sendBlock stateRef block user = do
     let sock = nuSocket user
+    sockName <- getPeerName sock
     sendAll sock $ encode "New block"
     sendAll sock $ encode block
-    sockName <- getPeerName sock
     putStrLn $ "Sent block to " ++ (show sockName)
-
 
 
 
