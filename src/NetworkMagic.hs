@@ -62,6 +62,8 @@ Send new block:
 
 -}
 
+type NetRequestHandler = MVar MinerState -> NetUser -> NetUserState -> IO (Maybe NetUserState)
+
 setupServer :: String -> String -> Handler
 setupServer ip port stateRef = do
     let hints = defaultHints { addrFlags = [AI_NUMERICHOST, AI_NUMERICSERV], addrSocketType = Stream }
@@ -100,8 +102,8 @@ clientInputHandleLoop stateRef user = do
                 if (nuService state) then
                     return (newState, False)
                 else do
-                    updatedState <- tryHandle stateRef user newState
-                    return (updatedState, False)
+                    mayRem <- tryHandle stateRef user newState
+                    return (maybe newState id mayRem, False)
                 )
     unless shouldStop (clientInputHandleLoop stateRef user)
 
@@ -122,21 +124,28 @@ connectAndSync ip port stateRef = do
 
 
 
-tryHandle :: MVar MinerState -> NetUser -> NetUserState -> IO NetUserState
+tryHandle :: NetRequestHandler
 tryHandle stateRef user newState = do
     let request :: Either (LB.ByteString, ByteOffset, String) (LB.ByteString, ByteOffset, String); request = decodeOrFail (nuBuffer newState)
     case request of
         Left (_, _, err) -> do
-            return newState
+            putStrLn $ "Handle error: " ++ err
+            return Nothing
         Right (remainder, _, "New block") -> do
-            let block :: Either (LB.ByteString, ByteOffset, String) (LB.ByteString, ByteOffset, Block); block = decodeOrFail remainder
-            case block of
-                Left (_, _, nerr) -> do
-                    return newState
-                Right (remainder', _, block') -> do
-                    peerName <- getPeerName $ nuSocket $ user
-                    putStrLn $ "Got new block from " ++ (show $ peerName)
-                    modifyMVar stateRef (\miner -> return (miner{ blocks = (block':(blocks miner)) }, newState{ nuBuffer = remainder' }))
+            handleNewBlock stateRef user newState{ nuBuffer = remainder}
+        Right _ -> do
+            return Nothing
+
+handleNewBlock :: NetRequestHandler
+handleNewBlock stateRef user newState = do
+    let block :: Either (LB.ByteString, ByteOffset, String) (LB.ByteString, ByteOffset, Block); block = decodeOrFail (nuBuffer newState)
+    case block of
+        Left _ -> do
+            return Nothing
+        Right (remainder, _, block') -> do
+            peerName <- getPeerName $ nuSocket $ user
+            putStrLn $ "Got new block from " ++ (show peerName)
+            modifyMVar stateRef (\miner -> return (miner{ blocks = (block':(blocks miner)) }, Just newState{ nuBuffer = remainder }))
 
 
 
@@ -149,7 +158,7 @@ propagateLastBlockToNet stateRef = do
             Just newBlock -> do
                 foldMap (sendBlock stateRef newBlock) net
                 return (miner, ())
-        putStrLn $ "Sent block to " ++ (show $ length $ net) ++ " users" 
+        putStrLn $ "Sent block to " ++ (show $ length $ net) ++ " users"
         return (miner, ())
         ))
     return ()
@@ -188,5 +197,5 @@ endService :: MVar MinerState -> NetUser -> IO ()
 endService stateRef user = modifyMVar (nuState user) (\state -> do
     let modifiedState = state { nuService = False }
     newState <- tryHandle stateRef user modifiedState
-    return (newState, ())
+    return (maybe modifiedState id newState, ())
     )
