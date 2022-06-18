@@ -1,10 +1,8 @@
 module Console where
 
---Data.Text.Lazy.IO
 import Text.Read (readMaybe)
 import Control.Concurrent.MVar
 import System.IO
-
 import MinerState
 import TBlock
 import Commiter
@@ -12,13 +10,14 @@ import Sender
 import Explorer
 import NetworkMagic
 
-
+-- | Output and input in concole with prompt.
 prompt :: String -> IO String
 prompt text = do
     putStr text
     hFlush stdout
     getLine
 
+-- | Types of commands
 data Command
     = Exit_
     | Commit Transaction
@@ -26,12 +25,14 @@ data Command
     | Show
     | Connect String String
 
+-- | Exit from programm
 handleExit_ :: Handler
 handleExit_ stateRef = do
     modifyMVar stateRef (\miner -> 
         return (miner{shouldExit = True},())) 
     putStrLn "Bye!"
 
+-- | Handling of command.
 handleCommand :: Command -> Handler
 handleCommand command = case command of
   Exit_ -> handleExit_
@@ -40,6 +41,7 @@ handleCommand command = case command of
   Show -> exploreNetwork
   Connect ip port -> connectAndSync ip port 
 
+-- | Parsing of command.
 parseCommand :: String -> Maybe Command
 parseCommand input =
     case input of
@@ -68,6 +70,7 @@ run = do
     initMinerState' <- newMVar (MinerState [] [] [] False)
     mainLoop initMinerState' parseCommand handleCommand
 
+-- | Processing of commands.
 mainLoop
     :: MVar MinerState
     -> (String -> Maybe Command)

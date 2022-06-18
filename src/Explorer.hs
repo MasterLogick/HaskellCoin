@@ -5,7 +5,7 @@ import Control.Concurrent.MVar
 import MinerState
 import TBlock
 
-
+-- | Getting of transactions' description.
 getEnumeratedTransList :: Integer -> [Transaction] -> String
 getEnumeratedTransList _ [] = ""
 getEnumeratedTransList num ((Transaction senderHash recvHash amount _signature): xs) 
@@ -15,9 +15,11 @@ getEnumeratedTransList num ((Transaction senderHash recvHash amount _signature):
     ++ "\nAmount: "      ++ (show amount) 
     ++ "\n"              ++ (getEnumeratedTransList (num + 1) xs)
 
+-- | Getting a list of transactions.
 getTransList :: [Transaction] -> String
 getTransList transList = getEnumeratedTransList 1 transList
 
+-- | Getting information about block.
 getBlockInfo :: Block -> String
 getBlockInfo (Block prevHash minerHash nonce transCount transList) 
     = "Prev Hash: "         ++ (show prevHash) 
@@ -26,14 +28,16 @@ getBlockInfo (Block prevHash minerHash nonce transCount transList)
     ++ "\nTrans Count: "    ++ (show transCount) 
     ++ "\nTransactions: \n" ++ (getTransList transList)
 
+-- | Getting information about list of blocks.
 sumBlocksInfo :: [Block] -> String
 sumBlocksInfo [] = "\n"
 sumBlocksInfo (x: xs) 
     = (getBlockInfo x) ++ "##################\n" 
     ++ sumBlocksInfo xs 
 
+-- | Printing of all blocks in console.
 exploreNetwork :: Handler
 exploreNetwork stateRef = do
     miner <- readMVar stateRef
-    putStrLn $ sumBlocksInfo $ blocks $ miner
+    putStrLn $ sumBlocksInfo $ blocks miner
     return ()
