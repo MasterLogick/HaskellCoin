@@ -15,3 +15,6 @@ This is final project for the Haskell-course in Innopolis University, Summer 202
 
 # Contributing
 We are happy to receive bug reports, fixes, documentation enhancements, and other improvements.
+
+# Prerequisites
+This project can be build with Cabal and GHC 8.10.7 or with Stack tool. We recommend that you use ghcup to install these.
