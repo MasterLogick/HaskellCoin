@@ -4,6 +4,8 @@ module CryptoMagic where
 import Data.Binary
 import qualified Data.ByteString as DBY
 import Crypto.Hash
+--import Crypto.Sign.Ed25519
+import Crypto.PubKey.RSA
 import qualified Data.ByteArray as Data
 
 -- | Saving of block's hash.
@@ -13,7 +15,10 @@ type BlockHash = Digest SHA1
 hashFunc :: DBY.ByteString -> Digest SHA1
 hashFunc = hash
 
--- | Instance of block.
+--secret :: SecretKey
+--(pk, sk) = createKeypair
+
+-- | Make block hashable.
 instance Binary BlockHash where
     put digest = do
         put $ DBY.pack $ Data.unpack digest
