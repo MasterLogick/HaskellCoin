@@ -12,6 +12,7 @@ import qualified Data.ByteString.Lazy as LB
 
 import MinerState
 import TBlock
+import CryptoMagic
 
 
 {-
@@ -58,7 +59,7 @@ Send new block:
 
 -}
 
-type NetRequestHandler = MVar MinerState -> NetUser -> InBuffer -> IO (Maybe InBuffer)
+type NetRequestHandler = MVar MinerState -> NetUser -> IO Bool
 
 setupServer :: String -> String -> Handler
 setupServer ip port stateRef = do
@@ -81,8 +82,8 @@ serverHandleLoop stateRef serverSocket = do
 
 clientInputHandleLoop :: MVar MinerState -> NetUser -> IO ()
 clientInputHandleLoop stateRef user = do
+    chunk <- recv (nuSocket user) 4096
     shouldStop <- modifyMVar (nuBuffer user) (\buffer -> do
-            chunk <- recv (nuSocket user) 1024
             if (LB.null chunk) then do
                 peerName <- getPeerName $ nuSocket $ user
                 putStrLn $ "Connection to " ++ (show $ peerName) ++ " lost"
@@ -93,17 +94,18 @@ clientInputHandleLoop stateRef user = do
                     )
                 return (buffer, True)
             else do
-                let newBuff = LB.append buffer chunk
-                needService <- modifyMVar (nuService user)
-                    (\isServiced -> return (True, not isServiced))
-                if needService then do
-                    mayRem <- tryHandle stateRef user newBuff
-                    swapMVar (nuService user) False
-                    return (fromMaybe newBuff mayRem, False)
-                else do
-                    return (newBuff, False)
-                )
-    unless shouldStop (clientInputHandleLoop stateRef user)
+                let newBuffer = LB.append buffer chunk
+                return (newBuffer, False)
+        )
+    unless shouldStop $ do
+        canService' <- canService user
+        when canService' $ do
+            forkIO $ do
+                success <- handleIncommingMessage stateRef user
+                swapMVar (nuService user) False
+                unless success $ gracefulClose (nuSocket user) 3000
+            return ()
+        clientInputHandleLoop stateRef user
 
 handleNewConnection :: MVar MinerState -> Socket -> IO ()
 handleNewConnection stateRef sock = do
@@ -118,32 +120,44 @@ connectAndSync ip port stateRef = do
     addr:_ <- getAddrInfo (Just hints) (Just ip) (Just port)
     sock <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
     connect sock $ addrAddress addr
+    putStrLn $ "Connection to " ++ (show $ addrAddress $ addr) ++ " established"
     handleNewConnection stateRef sock
 
 
 
-tryHandle :: NetRequestHandler
-tryHandle stateRef user newBuffer = do
-    let request :: Either (LB.ByteString, ByteOffset, String) (LB.ByteString, ByteOffset, String); request = decodeOrFail newBuffer
+handleIncommingMessage :: NetRequestHandler
+handleIncommingMessage stateRef user = do
+    let bufferRef = nuBuffer user
+    buffer <- takeMVar bufferRef
+    let request :: Either (LB.ByteString, ByteOffset, String) (LB.ByteString, ByteOffset, String); request = decodeOrFail buffer
     case request of
         Left (_, _, err) -> do
-            putStrLn $ "Handle error: " ++ err
-            return Nothing
-        Right (remainder, _, "New block") -> do
-            handleNewBlock stateRef user remainder
-        Right _ -> do
-            return Nothing
+            putMVar bufferRef buffer
+            return True
+        Right (remainder, consumedSize, tag) -> do
+            putMVar bufferRef remainder
+            case tag of
+                "New block" -> handleNewBlock stateRef user
+                "Gimme last hash" -> handleLastHashRequest stateRef user
+                _ -> return False
 
 handleNewBlock :: NetRequestHandler
-handleNewBlock stateRef user newBuffer = do
-    let block :: Either (LB.ByteString, ByteOffset, String) (LB.ByteString, ByteOffset, Block); block = decodeOrFail newBuffer
-    case block of
-        Left _ -> do
-            return Nothing
-        Right (remainder, _, block') -> do
-            peerName <- getPeerName $ nuSocket $ user
+handleNewBlock stateRef user = do
+    block' <- recieve user :: IO (Maybe Block)
+    case block' of
+        Nothing -> return False
+        Just block -> do
+            peerName <- getPeerName (nuSocket user)
             putStrLn $ "Got new block from " ++ (show peerName)
-            modifyMVar stateRef (\miner -> return (miner{ blocks = (block':(blocks miner)) }, Just remainder))
+            modifyMVar_ stateRef (\miner -> return miner{ blocks = (block:(blocks miner)) })
+            return True
+
+handleLastHashRequest :: NetRequestHandler
+handleLastHashRequest stateRef user = do
+    minerState <- readMVar stateRef
+    let lastBlockHash = hashFunc $ LB.toStrict $ encode $ getNewestBlock $ minerState
+    sendAll (nuSocket user) (encode lastBlockHash)
+    return True
 
 
 
@@ -151,12 +165,8 @@ propagateLastBlockToNet :: Handler
 propagateLastBlockToNet stateRef = do
     forkIO (modifyMVar_ stateRef (\miner -> do
         let net = network miner
-        -- todo make code cleaner
-        case listToMaybe $ blocks $ miner of
-            Nothing -> return ()
-            Just newBlock -> do
-                foldMap (sendBlock stateRef newBlock) net
-                return ()
+        let newestBlock = getNewestBlock miner
+        foldMap (sendBlock stateRef newestBlock) net
         putStrLn $ "Sent block to " ++ (show $ length $ net) ++ " users"
         return miner
         ))
@@ -183,11 +193,24 @@ withService stateRef user i = do
 
 beginService :: NetUser -> IO ()
 beginService user = do
-    canStart <- modifyMVar (nuService user) 
-        (\isServiced -> return (True, not isServiced))
-    unless canStart (beginService user)
+    canService' <- canService user
+    unless canService' (beginService user)
 
 endService :: MVar MinerState -> NetUser -> IO ()
 endService stateRef user = do
-    swapMVar (nuService user) False
-    return ()
+        handleIncommingMessage stateRef user
+        swapMVar (nuService user) False
+        return ()
+
+canService :: NetUser -> IO Bool
+canService user = modifyMVar (nuService user) (\isBusy -> return (True, not isBusy))
+
+
+
+-- todo add timeout
+recieve :: Binary a => NetUser -> IO (Maybe a)
+recieve user = join $ modifyMVar (nuBuffer user) (\buffer ->
+        case decodeOrFail buffer of
+            Left _ -> return (buffer, recieve user)
+            Right (remainder, _, parsedVal) -> return (remainder, return (Just parsedVal))
+        )
