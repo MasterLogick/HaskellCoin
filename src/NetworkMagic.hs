@@ -20,6 +20,7 @@ HaskellCoin network protocol:
 
 
 Here client and server are just conventional names for requesting and responding sides. Actually both sides act as server and client.
+Client always sends String that identifies request in first of all. 
 
 
 Request hash of the last block in the chain:
@@ -27,12 +28,7 @@ Request hash of the last block in the chain:
     "Gimme last hash" :: String
 
 2) Server sends:
-    "Ok" :: String      -- if server has blocks in the chain (lol, almost always)
     hash :: BlockHash
-
-    or 
-
-    "Fail" :: String -- if server doesn't have any blocks in the chain
 
 3) Profit!!!
 
@@ -62,7 +58,7 @@ Send new block:
 
 -}
 
-type NetRequestHandler = MVar MinerState -> NetUser -> NetUserState -> IO (Maybe NetUserState)
+type NetRequestHandler = MVar MinerState -> NetUser -> InBuffer -> IO (Maybe InBuffer)
 
 setupServer :: String -> String -> Handler
 setupServer ip port stateRef = do
@@ -85,32 +81,34 @@ serverHandleLoop stateRef serverSocket = do
 
 clientInputHandleLoop :: MVar MinerState -> NetUser -> IO ()
 clientInputHandleLoop stateRef user = do
-    shouldStop <- modifyMVar (nuState user) (\state -> do
+    shouldStop <- modifyMVar (nuBuffer user) (\buffer -> do
             chunk <- recv (nuSocket user) 1024
             if (LB.null chunk) then do
                 peerName <- getPeerName $ nuSocket $ user
                 putStrLn $ "Connection to " ++ (show $ peerName) ++ " lost"
-                modifyMVar stateRef (\minerState -> 
-                    return (minerState{ network = 
+                modifyMVar_ stateRef (\minerState -> 
+                    return minerState{ network = 
                         filter (\x -> (nuSocket user) /= (nuSocket x)) (network minerState)
-                        }, ())
+                        }
                     )
-                return (state, True)
+                return (buffer, True)
             else do
-                let newBuff = LB.append (nuBuffer state) chunk
-                let newState = state{ nuBuffer = newBuff }
-                if (nuService state) then
-                    return (newState, False)
+                let newBuff = LB.append buffer chunk
+                needService <- modifyMVar (nuService user)
+                    (\isServiced -> return (True, not isServiced))
+                if needService then do
+                    mayRem <- tryHandle stateRef user newBuff
+                    swapMVar (nuService user) False
+                    return (fromMaybe newBuff mayRem, False)
                 else do
-                    mayRem <- tryHandle stateRef user newState
-                    return (maybe newState id mayRem, False)
+                    return (newBuff, False)
                 )
     unless shouldStop (clientInputHandleLoop stateRef user)
 
 handleNewConnection :: MVar MinerState -> Socket -> IO ()
 handleNewConnection stateRef sock = do
     user <- newNetUser sock
-    modifyMVar stateRef (\miner -> return (miner{ network = (user:(network miner)) },()))
+    modifyMVar_ stateRef (\miner -> return miner{ network = (user:(network miner)) })
     forkIO $ (clientInputHandleLoop stateRef user)
     return ()
 
@@ -125,48 +123,49 @@ connectAndSync ip port stateRef = do
 
 
 tryHandle :: NetRequestHandler
-tryHandle stateRef user newState = do
-    let request :: Either (LB.ByteString, ByteOffset, String) (LB.ByteString, ByteOffset, String); request = decodeOrFail (nuBuffer newState)
+tryHandle stateRef user newBuffer = do
+    let request :: Either (LB.ByteString, ByteOffset, String) (LB.ByteString, ByteOffset, String); request = decodeOrFail newBuffer
     case request of
         Left (_, _, err) -> do
             putStrLn $ "Handle error: " ++ err
             return Nothing
         Right (remainder, _, "New block") -> do
-            handleNewBlock stateRef user newState{ nuBuffer = remainder}
+            handleNewBlock stateRef user remainder
         Right _ -> do
             return Nothing
 
 handleNewBlock :: NetRequestHandler
-handleNewBlock stateRef user newState = do
-    let block :: Either (LB.ByteString, ByteOffset, String) (LB.ByteString, ByteOffset, Block); block = decodeOrFail (nuBuffer newState)
+handleNewBlock stateRef user newBuffer = do
+    let block :: Either (LB.ByteString, ByteOffset, String) (LB.ByteString, ByteOffset, Block); block = decodeOrFail newBuffer
     case block of
         Left _ -> do
             return Nothing
         Right (remainder, _, block') -> do
             peerName <- getPeerName $ nuSocket $ user
             putStrLn $ "Got new block from " ++ (show peerName)
-            modifyMVar stateRef (\miner -> return (miner{ blocks = (block':(blocks miner)) }, Just newState{ nuBuffer = remainder }))
+            modifyMVar stateRef (\miner -> return (miner{ blocks = (block':(blocks miner)) }, Just remainder))
 
 
 
 propagateLastBlockToNet :: Handler
 propagateLastBlockToNet stateRef = do
-    forkIO (modifyMVar stateRef (\miner -> do
+    forkIO (modifyMVar_ stateRef (\miner -> do
         let net = network miner
+        -- todo make code cleaner
         case listToMaybe $ blocks $ miner of
-            Nothing -> return (miner, ())
+            Nothing -> return ()
             Just newBlock -> do
                 foldMap (sendBlock stateRef newBlock) net
-                return (miner, ())
+                return ()
         putStrLn $ "Sent block to " ++ (show $ length $ net) ++ " users"
-        return (miner, ())
+        return miner
         ))
     return ()
 
 
 
 sendBlock :: MVar MinerState -> Block -> NetUser -> IO ()
-sendBlock stateRef block user = do
+sendBlock stateRef block user = withService stateRef user $ do
     let sock = nuSocket user
     sockName <- getPeerName sock
     sendAll sock $ encode "New block"
@@ -184,18 +183,11 @@ withService stateRef user i = do
 
 beginService :: NetUser -> IO ()
 beginService user = do
-    canStart' <- modifyMVar (nuState user) (\state -> do
-        let canStart = ((LB.null (nuBuffer state)) && (nuService state))
-        if canStart then
-            return (state{ nuService = True }, canStart)
-        else
-            return (state, canStart)
-        )
-    unless canStart' (beginService user)
+    canStart <- modifyMVar (nuService user) 
+        (\isServiced -> return (True, not isServiced))
+    unless canStart (beginService user)
 
 endService :: MVar MinerState -> NetUser -> IO ()
-endService stateRef user = modifyMVar (nuState user) (\state -> do
-    let modifiedState = state { nuService = False }
-    newState <- tryHandle stateRef user modifiedState
-    return (maybe modifiedState id newState, ())
-    )
+endService stateRef user = do
+    swapMVar (nuService user) False
+    return ()

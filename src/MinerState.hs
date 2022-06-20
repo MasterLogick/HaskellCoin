@@ -18,17 +18,16 @@ data MinerState = MinerState {
 -- | the type of commands available to enter into the console
 type Handler = MVar MinerState -> IO ()
 
+type InBuffer = LB.ByteString
+
 data NetUser = NetUser {
     nuSocket :: Socket,
-    nuState :: MVar NetUserState
+    nuBuffer :: MVar InBuffer,
+    nuService :: MVar Bool
 }
 
 newNetUser :: Socket -> IO NetUser
 newNetUser sock = do
-    state <- newMVar (NetUserState LB.empty False)
-    return (NetUser sock state)
-
-data NetUserState = NetUserState {
-    nuBuffer :: LB.ByteString,
-    nuService :: Bool
-}
+    buffer <- newMVar LB.empty
+    service <- newMVar False
+    return (NetUser sock buffer service)
