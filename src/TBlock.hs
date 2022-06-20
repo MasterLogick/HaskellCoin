@@ -8,6 +8,10 @@ import CryptoMagic
 -- | amount of transactions and list of all transactions that corespond to this block
 data Block = Block PrevHash MinerHash Nonce TransCount TransList
 
+-- | Fallback block to use in case of some extraordinary situations
+fallbackBlock :: Block
+fallbackBlock = Block fallbackHash fallbackHash 0 0 []
+
 -- | this instance is neccessary for converting block into bytes and also bytes into data block                 
 instance Binary Block where
     put (Block prevHash minerHash nonce transCount transList) = do

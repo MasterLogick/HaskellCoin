@@ -2,6 +2,7 @@ module MinerState where
 
 import Control.Concurrent.MVar
 import Network.Socket
+import Data.Maybe
 import qualified Data.ByteString.Lazy as LB
 
 import TBlock
@@ -31,3 +32,6 @@ newNetUser sock = do
     buffer <- newMVar LB.empty
     service <- newMVar False
     return (NetUser sock buffer service)
+
+getNewestBlock :: MinerState -> Block
+getNewestBlock minerState = fromMaybe fallbackBlock (listToMaybe (blocks minerState))

@@ -15,6 +15,10 @@ type BlockHash = Digest SHA1
 hashFunc :: DBY.ByteString -> Digest SHA1
 hashFunc = hash
 
+-- | Fallback hash to use in case of some extraordinary situations
+fallbackHash :: BlockHash
+fallbackHash = hashFunc $ DBY.toStrict $ encode (0 :: Int)
+
 --secret :: SecretKey
 --(pk, sk) = createKeypair
 
