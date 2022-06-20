@@ -1,35 +1,37 @@
+# HaskellCoin
 
+Yet another blockchain but written in Haskell this time.
 
-<h1 align="center">HaskellCoin</a> 
-<img src="https://github.com/blackcater/blackcater/raw/main/images/Hi.gif" height="32"/></h1>
+## Development
 
-# Motivation
-This is final project for the Haskell-course in Innopolis University, Summer 2022
+The project is developed with both stack and cabal.
 
-# Prerequisites
-This project can be build with Cabal and GHC 8.10.7 or with Stack tool. We recommend that you use ghcup to install these.
+### Building from sources
 
-# MVP features
-Minimal blockchain system, the whole chain runs on one local machine without any
-user interaction, includes check-up operations, minimal prerequisites for secure digital signatures and hashing.
-### Additional:
-• CLI command line chain explorer
+For building with `cabal`:
+```sh
+git clone https://github.com/MasterLogick/HaskellCoin
+cd HaskellCoin
+cabal v2-build
+```
+And for starting HaskellCoin just run `cabal v2-run` 
 
-• PoW (Proof of Work)
+For building using `stack`:
+```sh
+git clone https://github.com/MasterLogick/HaskellCoin
+cd HaskellCoin
+stack build
+```
+And for starting HaskellCoin just run `stack run`
 
-• Secure digital signature (probably modified NTRUsign) 
+## Alpha version description:
 
-• Blockchain dumper
+Minimal blockchain system. The whole chain runs on the local machine without any network rules or transaction signing. CLI only.
 
-• Digital signature for every user (ECDSA on Edwards25519)
+## Release version features:
 
-# Our Team:
-1. Anton Nekhaev
-2. Vladimir Surikov
-3. Alexander Buchnev
-4. Elina Akimchenkova
-5. Nastya Barabanova
-
-# Contributing
-We are happy to receive bug reports, fixes, documentation enhancements, and other improvements.
-
++ Blockchain explorer
++ Migrating to PoW (Proof of Work)
++ Saving blockchain to hard drive
++ Digital signature for every user (ECDSA on Edwards25519)
++ Propagating blocks over the Internet
