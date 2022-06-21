@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e01b1d500cd8e046dd13adcd4ba98f4a4c1bd028493f6ab93dee7c74b25679dd
+-- hash: 65dba29cd6cb5ed43f51de8632d540faf16ffc2951d54dc6e6abd08d6e333e4c
 
 name:           HaskellCoin
 version:        0.1.0.0
@@ -35,6 +35,7 @@ library
       HelpCommand
       MinerState
       NetworkMagic
+      NetworkRules
       Sender
       TBlock
   other-modules:

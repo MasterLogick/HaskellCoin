@@ -13,6 +13,7 @@ import qualified Data.ByteString.Lazy as LB
 import MinerState
 import TBlock
 import CryptoMagic
+import NetworkRules
 
 
 {-
@@ -154,9 +155,21 @@ handleNewBlock stateRef user = do
     case block' of
         Nothing -> return False
         Just block -> do
-            peerName <- getPeerName (nuSocket user)
-            putStrLn $ "Got new block from " ++ (show peerName)
-            modifyMVar_ stateRef (\miner -> return miner{ blocks = (block:(blocks miner)) })
+            modifyMVar_ stateRef (\minerState -> do
+                let acceptance = judgeBlock minerState block
+                peerName <- getPeerName (nuSocket user)
+                case acceptance of
+                    Accept -> do
+                        putStrLn $ "Accepted new block " ++ (show (getBlockHash block)) ++ " from " ++ (show peerName)
+                        propagateLastBlockToNet stateRef
+                        return minerState{ blocks = (block:(blocks minerState)) }
+                    Decline -> do
+                        putStrLn $ "Declined new block " ++ (show (getBlockHash block)) ++ " from " ++ (show peerName)
+                        return minerState
+                    BranchDivergence -> do
+                        putStrLn $ "New block " ++ (show (getBlockHash block)) ++ " from " ++ (show peerName) ++ " created branch divergence"
+                        return minerState
+                )
             return True
 
 handleLastHashRequest :: NetRequestHandler
