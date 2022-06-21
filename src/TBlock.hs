@@ -7,7 +7,13 @@ import CryptoMagic
 
 -- | data Block stores previous block hash, miner hash, nonce of block, 
 -- | amount of transactions and list of all transactions that corespond to this block
-data Block = Block PrevHash MinerHash Nonce TransCount TransList
+data Block = Block {
+    bPrevHash :: PrevHash,
+    bMinerHash :: MinerHash,
+    bNonce :: Nonce,
+    bTransCount :: TransCount,
+    bTransList :: TransList
+}
 
 -- | Fallback block to use in case of some extraordinary situations
 fallbackBlock :: Block
@@ -32,6 +38,9 @@ instance Binary Block where
         transCount <- get :: Get TransCount
         transList <- get :: Get TransList
         return (Block prevHash minerHash nonce transCount transList)
+
+instance Eq Block where
+    (==) block1 block2 = getBlockHash block1 == (getBlockHash block2)
 
 -- | data Transaction stores information about sender, recipient, amount of transaction
 -- | and also signature
