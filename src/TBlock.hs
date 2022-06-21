@@ -1,6 +1,7 @@
 module TBlock where
 
 import Data.Binary
+import qualified Data.ByteString.Lazy as LB
 
 import CryptoMagic
 
@@ -11,6 +12,9 @@ data Block = Block PrevHash MinerHash Nonce TransCount TransList
 -- | Fallback block to use in case of some extraordinary situations
 fallbackBlock :: Block
 fallbackBlock = Block fallbackHash fallbackHash 0 0 []
+
+getBlockHash :: Block -> BlockHash
+getBlockHash b = hashFunc (LB.toStrict (encode b))
 
 -- | this instance is neccessary for converting block into bytes and also bytes into data block                 
 instance Binary Block where

@@ -18,12 +18,6 @@ getLast [] = Nothing
 getLast [e] = Just e
 getLast (e:es) = getLast es
 
--- | function blockHash hashes the block
-blockHash :: Maybe Block -> BlockHash
-blockHash Nothing = hashFunc $ DBY.toStrict $ Data.Binary.encode (0 :: Int) -- hash of (0 :: Int)
-blockHash (Just block)
-     = hashFunc (DBY.toStrict $ encode block)
-
 -- | function buildAndSendToNet builds and sends a block into the network
 -- | and as a result, the line that the block is built
 buildAndSendToNet :: Handler
@@ -31,8 +25,8 @@ buildAndSendToNet stateRef = do
     modifyMVar stateRef (\minerState -> do
         let blockchain = blocks minerState
         let pending = pendingTransactions minerState
-        let hashedPrev :: BlockHash; hashedPrev = blockHash (listToMaybe $ Prelude.reverse $ blockchain)
-        let newBlock :: Block; newBlock = Block hashedPrev (blockHash Nothing) 0 (Prelude.length pending) pending
+        let hashedPrev :: BlockHash; hashedPrev = getBlockHash (fromMaybe fallbackBlock (listToMaybe blockchain))
+        let newBlock :: Block; newBlock = Block hashedPrev fallbackHash 0 (Prelude.length pending) pending
         propagateLastBlockToNet stateRef
         let newChain :: [Block]; newChain = newBlock : blockchain
         return (minerState{blocks = newChain, pendingTransactions = []}, ())

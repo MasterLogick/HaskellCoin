@@ -6,6 +6,7 @@ import Data.Maybe
 import qualified Data.ByteString.Lazy as LB
 
 import TBlock
+import CryptoMagic
 
 -- | data MinerState storers information about blocks, pendings transactions,
 -- | network and boole flag on exit
@@ -35,3 +36,8 @@ newNetUser sock = do
 
 getNewestBlock :: MinerState -> Block
 getNewestBlock minerState = fromMaybe fallbackBlock (listToMaybe (blocks minerState))
+
+getBlockByHash :: MinerState -> BlockHash -> Maybe Block
+getBlockByHash minerState hash = listToMaybe (filter filterRule (blocks minerState))
+    where
+        filterRule block = (getBlockHash block) == hash
