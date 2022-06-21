@@ -107,12 +107,12 @@ clientInputHandleLoop stateRef user = do
             return ()
         clientInputHandleLoop stateRef user
 
-handleNewConnection :: MVar MinerState -> Socket -> IO ()
+handleNewConnection :: MVar MinerState -> Socket -> IO NetUser
 handleNewConnection stateRef sock = do
     user <- newNetUser sock
     modifyMVar_ stateRef (\miner -> return miner{ network = (user:(network miner)) })
     forkIO $ (clientInputHandleLoop stateRef user)
-    return ()
+    return user
 
 connectAndSync :: String -> String -> Handler
 connectAndSync ip port stateRef = do
@@ -121,7 +121,13 @@ connectAndSync ip port stateRef = do
     sock <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
     connect sock $ addrAddress addr
     putStrLn $ "Connection to " ++ (show $ addrAddress $ addr) ++ " established"
-    handleNewConnection stateRef sock
+    user <- handleNewConnection stateRef sock
+    peerName <- getPeerName sock
+    mHash <- requestLastBlockHash stateRef user
+    case mHash of
+        Nothing -> gracefulClose sock 3000
+        Just blockHash -> do
+            putStrLn $ "Recieved last block hash " ++ (show blockHash) ++ " from " ++ (show peerName)
 
 
 
@@ -139,6 +145,7 @@ handleIncommingMessage stateRef user = do
             case tag of
                 "New block" -> handleNewBlock stateRef user
                 "Gimme last hash" -> handleLastHashRequest stateRef user
+                "Gimme block" -> handleBlockRequest stateRef user
                 _ -> return False
 
 handleNewBlock :: NetRequestHandler
@@ -155,9 +162,24 @@ handleNewBlock stateRef user = do
 handleLastHashRequest :: NetRequestHandler
 handleLastHashRequest stateRef user = do
     minerState <- readMVar stateRef
-    let lastBlockHash = hashFunc $ LB.toStrict $ encode $ getNewestBlock $ minerState
+    let lastBlockHash = getBlockHash (getNewestBlock minerState)
     sendAll (nuSocket user) (encode lastBlockHash)
     return True
+
+handleBlockRequest :: NetRequestHandler
+handleBlockRequest stateRef user = do
+    requestedHash' <- recieve user :: IO (Maybe BlockHash)
+    case requestedHash' of
+        Nothing -> return False
+        Just requestedHash -> do
+            minerState <- readMVar stateRef
+            let requestedBlock' = getBlockByHash minerState requestedHash 
+            case requestedBlock' of
+                Nothing -> sendAll (nuSocket user) (encode "Fail")
+                Just requestedBlock -> do
+                    sendAll (nuSocket user) (encode "Ok")
+                    sendAll (nuSocket user) (encode requestedBlock)
+            return True
 
 
 
@@ -178,10 +200,17 @@ sendBlock :: MVar MinerState -> Block -> NetUser -> IO ()
 sendBlock stateRef block user = withService stateRef user $ do
     let sock = nuSocket user
     sockName <- getPeerName sock
-    sendAll sock $ encode "New block"
-    sendAll sock $ encode block
+    sendAll sock (encode "New block")
+    sendAll sock (encode block)
     putStrLn $ "Sent block to " ++ (show sockName)
 
+requestLastBlockHash :: MVar MinerState -> NetUser -> IO (Maybe BlockHash)
+requestLastBlockHash stateRef user = withService stateRef user $ do
+    let sock = nuSocket user
+    sockName <- getPeerName sock
+    sendAll sock (encode "Gimme last hash")
+    recieve user :: IO (Maybe BlockHash)
+    
 
 
 withService :: MVar MinerState -> NetUser -> IO a -> IO a
