@@ -36,6 +36,13 @@ And for starting HaskellCoin just run `stack run`
 
 Minimal blockchain system. The whole chain runs on the local machine without any network rules or transaction signing. CLI only.
 
+Features:
++ Commit new trasnactino to pending block
++ Build new block from pending transactions
++ Show all blocks and transactions
++ Show current balance of specified user
+
+
 ## Release version features:
 
 + Blockchain explorer
