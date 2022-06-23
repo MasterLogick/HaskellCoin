@@ -13,6 +13,7 @@ import Explorer
 import NetworkMagic
 import AccountBalance
 import HelpCommand
+import FilesMagic
 
 -- | Output and input in concole with prompt.
 prompt :: String -> IO String
@@ -29,6 +30,8 @@ data Command
     | Show
     | Connect String String
     | Balance SenderHash
+    | LoadBlocks Path
+    | WriteBlocks Path
     | StartServer String String
     | Help
 
@@ -49,6 +52,8 @@ handleCommand command = case command of
   Connect ip port -> connectAndSync ip port 
   Balance id_sender -> userBalance id_sender
   StartServer ip port -> setupServer ip port
+  LoadBlocks filePath -> loadBlocks filePath
+  WriteBlocks filePath -> writeBlocks filePath
   Help -> printHelp
 
 
@@ -81,6 +86,10 @@ parseCommand input =
                     -- Just (Balance id_sender)
                 ["start", "server", ip, port] ->
                     Just (StartServer ip port)
+                ["loadFile", path] ->
+                    Just (LoadBlocks path)
+                ["writeFile", path] ->
+                    Just (WriteBlocks path)
                 _ -> Nothing
 
 printGreeting :: IO()
