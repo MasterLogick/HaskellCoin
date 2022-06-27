@@ -4,16 +4,15 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 65dba29cd6cb5ed43f51de8632d540faf16ffc2951d54dc6e6abd08d6e333e4c
+-- hash: 935a0d454bfb19d0cbaa2e9ea862492f28fab5e2088a7b4082d9a991f0dc7f38
 
 name:           HaskellCoin
-version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/HaskellCoin#readme>
-homepage:       https://github.com/githubuser/HaskellCoin#readme
-bug-reports:    https://github.com/githubuser/HaskellCoin/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2022 Author name here
+version:        0.0.1.0
+description:    Yet another blockchain but written in Haskell this time
+homepage:       https://github.com/MasterLogick/HaskellCoin#readme
+bug-reports:    https://github.com/MasterLogick/HaskellCoin/issues
+author:         MasterLogick
+maintainer:     MasterLogick
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
@@ -23,7 +22,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/HaskellCoin
+  location: https://github.com/MasterLogick/HaskellCoin
 
 library
   exposed-modules:
@@ -32,6 +31,7 @@ library
       Console
       CryptoMagic
       Explorer
+      FilesMagic
       HelpCommand
       MinerState
       NetworkMagic
