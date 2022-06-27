@@ -48,6 +48,6 @@ Features:
 + Blockchain explorer
 + Migrating to PoW (Proof of Work)
 + Saving blockchain to hard drive
-+ Digital signature for every user (ECDSA on Edwards25519)
++ Digital signature for every user (ECDSA on NIST-P521R1)
 + Propagating blocks over the Internet
 + Network rules

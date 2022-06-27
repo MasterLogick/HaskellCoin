@@ -44,7 +44,7 @@ instance Eq Block where
 
 -- | data Transaction stores information about sender, recipient, amount of transaction
 -- | and also signature
-data Transaction = Transaction SenderHash RecvHash Amount Signature
+data Transaction = Transaction SenderHash RecvHash Amount HSignature
 
 -- | this instance is neccessary for converting transactions into bytes and also bytes into data block 
 instance Binary Transaction where
@@ -58,11 +58,10 @@ instance Binary Transaction where
         sender <- get :: Get SenderHash
         receiver <- get :: Get RecvHash
         amount <- get :: Get Amount
-        sig <- get :: Get Signature
+        sig <- get :: Get HSignature
         return (Transaction sender receiver amount sig)
 
 -- | neccessary type aliases
-type Signature = Integer
 type SenderHash = BlockHash
 type RecvHash = BlockHash
 type Amount = Double
