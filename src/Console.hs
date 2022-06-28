@@ -1,10 +1,12 @@
+{-# LANGUAGE TypeApplications #-}
 module Console where
 
 import Text.Read (readMaybe)
 import Control.Concurrent.MVar
+import qualified Data.ByteString.Char8 as C8
 import System.IO
 import Network.Socket
-
+import CryptoMagic
 import MinerState
 import TBlock
 import Commiter
@@ -14,6 +16,7 @@ import NetworkMagic
 import AccountBalance
 import HelpCommand
 import FilesMagic
+import CryptoHandler
 
 -- | Output and input in concole with prompt.
 prompt :: String -> IO String
@@ -25,7 +28,7 @@ prompt text = do
 -- | Types of commands
 data Command
     = Exit_
-    | Commit Transaction
+    | Commit TransactionCandidate
     | BuildAndSend
     | Show
     | Connect String String
@@ -33,6 +36,9 @@ data Command
     | LoadBlocks Path
     | WriteBlocks Path
     | StartServer String String
+    | GeneratePair
+    | ShowPair
+    | Id
     | Help
 
 -- | Exit from programm
@@ -54,6 +60,9 @@ handleCommand command = case command of
   StartServer ip port -> setupServer ip port
   LoadBlocks filePath -> loadBlocks filePath
   WriteBlocks filePath -> writeBlocks filePath
+  GeneratePair -> genPair
+  ShowPair -> printPair
+  Id -> getId
   Help -> printHelp
 
 
@@ -64,6 +73,9 @@ parseCommand input =
         "exit" -> Just Exit_
         "build" -> Just BuildAndSend
         "show" -> Just Show
+        "generate" -> Just GeneratePair
+        "key"  -> Just ShowPair
+        "id" -> Just Id
         "help" -> Just Help
         _ ->
             case words input of
@@ -76,7 +88,7 @@ parseCommand input =
                                 Just sender ->
                                     case readMaybe id_reciver of
                                         Nothing -> Nothing
-                                        Just reciver -> Just (Commit (Transaction sender reciver amount 0))
+                                        Just reciver -> Just (Commit (TransactionCandidate sender reciver amount))
                 ["connect", ip, port] ->
                     Just (Connect ip port)
                 ["balance", idSender] ->
@@ -100,7 +112,7 @@ printGreeting = do
     putStrLn "|  _  | (_| \\__ \\   <  __/ | | |__| (_) | | | | |"
     putStrLn "|_| |_|\\__,_|___/_|\\_\\___|_|_|\\____\\___/|_|_| |_|"
     putStrLn "                                                 "
-    putStrLn "The best blockchain written in the best language."
+    putStrLn "The best blockchain ever. Fully written in the best language ever."
     putStrLn "                                                 "
     putStrLn "                                                 "
     putStrLn "Print help to get command list and description."
@@ -108,7 +120,7 @@ printGreeting = do
 -- | Default entry point.
 run :: IO ()
 run = withSocketsDo $ do
-    initMinerState' <- newMVar (MinerState [] [] [] False)
+    initMinerState' <- newMVar (MinerState [] [] [] fallbackPair False)
     printGreeting
     mainLoop initMinerState' parseCommand handleCommand
 

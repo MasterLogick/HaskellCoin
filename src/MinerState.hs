@@ -14,6 +14,7 @@ data MinerState = MinerState {
     blocks :: [Block],
     pendingTransactions :: [Transaction],
     network :: [NetUser],
+    keyPair :: Pair,
     shouldExit :: Bool
 }
 

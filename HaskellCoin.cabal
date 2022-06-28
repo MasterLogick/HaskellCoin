@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 935a0d454bfb19d0cbaa2e9ea862492f28fab5e2088a7b4082d9a991f0dc7f38
+-- hash: 9a269ed2a4b6c53bff0c66954fb5cfd191408f9c4e55067d2391d633f15b3082
 
 name:           HaskellCoin
 version:        0.0.1.0
@@ -29,6 +29,7 @@ library
       AccountBalance
       Commiter
       Console
+      CryptoHandler
       CryptoMagic
       Explorer
       FilesMagic
