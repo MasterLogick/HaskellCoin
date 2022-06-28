@@ -1,29 +1,47 @@
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module CryptoMagic where
 
 import Data.Proxy
 import Data.Binary
-import Data.ByteString as DBS
+import Data.ByteString
 import Data.ByteArray
 import Data.ByteArray.Encoding
 import qualified Data.ByteString as DBY
 import qualified Data.ByteArray as Data
 import qualified Data.ByteString.Char8 as C8
+import qualified Data.ByteString.Lazy as B
 import Crypto.ECC
+    ( Curve_P521R1,
+      EllipticCurve(curveGenerateKeyPair),
+      KeyPair(keypairGetPublic, keypairGetPrivate) )
 import Crypto.Hash
 import Crypto.Error
 import Crypto.Random.Types
 import Crypto.PubKey.ECDSA as ECDSA
-import Data.Maybe (fromMaybe)
+
+import Control.Monad
+import Basement.Compat.Base (Exception)
+import Basement.Compat.Base
+import  Data.Binary.Get
+
+-- | Saving of block's hash.
+type BlockHash = Digest SHA1
+
+-- | Hash function.
+hashFunc :: DBY.ByteString -> Digest SHA1
+hashFunc = hash
+
+-- | Fallback hash to use in case of some extraordinary situations
+fallbackHash :: BlockHash
+fallbackHash = hashFunc $ DBY.toStrict $ encode (0 :: Int)
 
 -- | Enum For Getting Key From Pair Tuple
 data GetKey = Private | Public deriving Eq
 type Pair = (ByteString, ByteString)
 
--- | Type of hash and curve
-type BlockHash = Digest SHA1
-type HSignature = (ByteString, ECDSA.Signature Curve_P521R1)
---type Signature = Integer
+--type HSignature = (ByteString, ECDSA.Signature Curve_P521R1)
+type HSignature = Integer
 
 -- | For the curve we are using, the parameters are
 -- | PubKey length - 133 bytes
@@ -55,7 +73,7 @@ generatePublic priv = encodePublic proxy (toPublic proxy dPriv)
     where
         dPriv = throwCryptoError (decodePrivate proxy priv)
 
--- | Sign string message using PrivateKey. We do not actually care about signing message
+-- | Sign string message using PrivateKey.
 signStringMsg :: (MonadRandom m) => ByteString -> ByteString -> m (ECDSA.Signature Curve_P521R1)
 signStringMsg priv msg = sign proxy dPriv SHA256 eMsg
     where
@@ -69,22 +87,10 @@ verifyStringMsg pub sig = verify proxy SHA256 dPub sig eMsg
         dPub = throwCryptoError (decodePublic proxy pub)
         eMsg = C8.pack ""
 
---printSignatureInteger :: (Signature Curve_P521R1) -> IO ()
+printSignatureInteger :: IO (Signature Curve_P521R1)
 printSignatureInteger = do
-    tmp <- func
-    sig <- tmp
-    let i = signatureToIntegers proxy sig
-    let r = fst i
-    let s = snd i
-    return $ Prelude.length $ DBS.unpack $ toStrict $ encode r
-
--- | Hash function
-hashFunc :: DBY.ByteString -> Digest SHA1
-hashFunc = hash
-
--- | Fallback hash to use in case of some extraordinary situations
-fallbackHash :: BlockHash
-fallbackHash = hashFunc $ DBY.toStrict $ encode (0 :: Int)
+    sig <- join func
+    return sig
 
 func :: IO (IO (ECDSA.Signature Curve_P521R1))
 func = do
@@ -92,23 +98,19 @@ func = do
     let pub = getKeyFromPair Public pair
     let pri = getKeyFromPair Private pair
     let msg = toStrict $ encode (123 :: Int)
-    
+
     let signat = signStringMsg pri msg :: IO (ECDSA.Signature Curve_P521R1)
     return signat
 
--- | Make block hashable.
-instance Binary BlockHash where
-    put digest = do
-        put $ DBY.pack $ Data.unpack digest
+test = do
+    signature <- printSignatureInteger
+    let right = toStrict $ encode signature
+    let wrong = fromStrict (DBY.drop 10 right)
 
-    get = do
-        digest <- get :: Get DBY.ByteString
-        return $ extract $ digestFromByteString digest
-        where
-            extract :: Maybe BlockHash -> BlockHash
-            extract Nothing = hashFunc $ DBY.toStrict $ encode (0 :: Int) -- hash of (0 :: Int)
-            extract (Just digest) = digest
-            
+    let decoded = decodeOrFail wrong :: Either (B.ByteString, Data.Binary.Get.ByteOffset, String) (B.ByteString, ByteOffset, ECDSA.Signature Curve_P521R1)
+
+    return $ DBY.length right
+
 instance Binary (ECDSA.Signature Curve_P521R1) where
     put signature = do
         put $ signatureToIntegers proxy signature
@@ -116,9 +118,21 @@ instance Binary (ECDSA.Signature Curve_P521R1) where
     get = do
         sigPair <- get :: Get (Integer, Integer)
         let failableSignature = signatureFromIntegers proxy sigPair
-        let signature = unfail failableSignature
-        return signature
+        unfail failableSignature
         where
-            unfail :: CryptoFailable (Signature Curve_P521R1) -> Signature Curve_P521R1
-            unfail (CryptoPassed signature) = signature
-            unfail (CryptoFailed error_) = error $ show error_
+            unfail :: CryptoFailable (ECDSA.Signature Curve_P521R1) -> Get (ECDSA.Signature Curve_P521R1)
+            unfail (CryptoPassed signature) = return signature
+            unfail (CryptoFailed error_) = fail $ show error_
+
+-- | Make block hashable.
+instance Binary BlockHash where
+    put digest = do
+        put $ DBY.pack $ Data.unpack digest
+    
+    get = do
+        digest <- get :: Get DBY.ByteString
+        return $ extract $ digestFromByteString digest
+        where
+            extract :: Maybe BlockHash -> BlockHash
+            extract Nothing = hashFunc $ DBY.toStrict $ encode (0 :: Int) -- hash of (0 :: Int)
+            extract (Just digest) = digest 
