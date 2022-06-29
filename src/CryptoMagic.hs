@@ -8,6 +8,7 @@ import Data.ByteString
 import Data.ByteArray
 import Data.ByteArray.Encoding
 import qualified Data.ByteString as DBS
+import qualified Data.ByteString.Base64.URL as DBU
 import qualified Data.ByteArray as Data
 import qualified Data.ByteString.Char8 as C8
 import qualified Data.ByteString.Lazy as B
@@ -45,10 +46,18 @@ hashFunc = hash
 fallbackHash :: BlockHash
 fallbackHash = hashFunc $ DBS.toStrict $ encode (0 :: Int)
 
-fallbackPair :: Pair
-fallbackPair = (C8.pack $ Prelude.concat $ Prelude.replicate 133 "\000",
-               C8.pack $ Prelude.concat $ Prelude.replicate 66 "\000")
+-- | This is a special hash that starts with 00 byte. In real blockchain systems this parameter is different, 
+-- so it makes the problem of searching for nonce much harder. For the sake of testing & simplicity we decided
+-- to make this particular problem easy
+ruleHash :: BlockHash
+ruleHash = hashFunc $ DBS.toStrict $ encode (783 ::Int)
 
+-- | Fallback keypair to use in case of some extraordinary situations
+fallbackPair :: Pair
+fallbackPair = (DBU.decodeLenient $ C8.pack "BADoaSa2fzVfzsDUjbwiADEGZPVvy0SB6RUSm95qeY5fClNXHzUyhUojTvhJOfhY3_JBt2ujIjg0WBt-DEPOB2pIwgCoTpW2qcCqS2pd6P5PvgAFHiWL_5KFEOt3pNZTmUspvK3Sl1FQ1866xodvn2bfLacr-9xGnCONzBzEi5i9Ajqg1w==",
+               DBU.decodeLenient $ C8.pack "AUcQUJ2Ag6I2c-12b9WJcHzJNuqFWMC8nOOdEt-M_fzJOL-8wCpp0pviir_9Jnq3LCd3y4rp86YGfDdaVyIxfLv2")
+
+-- | Fallback signature to use in case of some extraordinary situations
 fallbackSignature :: IO (ECDSA.Signature Curve_P521R1)
 fallbackSignature = signMsg priv msg
     where
@@ -95,6 +104,7 @@ verifyStringMsg pub sig = verify proxy SHA1 dPub sig eMsg
         dPub = throwCryptoError (decodePublic proxy pub)
         eMsg = C8.pack ""
 
+-- | Make the signature hashable
 instance Binary (ECDSA.Signature Curve_P521R1) where
     put signature = do
         put $ signatureToIntegers proxy signature

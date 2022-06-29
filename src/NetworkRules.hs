@@ -1,8 +1,13 @@
 module NetworkRules where
 
+import Data.Binary
+import Data.ByteString hiding (head, dropWhile, elem, map, null, break, length, reverse)
 import MinerState
 import TBlock
 import AccountBalance
+import CryptoMagic
+
+data Judgement = Accept | AlreadyPresent | BranchDivergence -- | BadSignature
 
 checkEnoughCoins :: MinerState -> SenderHash -> Amount -> Bool
 checkEnoughCoins minerState senderHash amount
@@ -14,7 +19,19 @@ checkEnoughCoins minerState senderHash amount
     userTransactions = getListTransactions senderHash minerBlocks
     userBalance = getBalance senderHash minerBlocks (userTransactions ++ pendingTrans)
 
-data Judgement = Accept | AlreadyPresent | BranchDivergence -- | BadSignature
+genNonces :: Block -> [Block]
+genNonces (Block prevHash minerId _ trans transList) = blocks
+    where
+        blocks = map compueWithNonce [0,1..]
+        compueWithNonce :: Nonce -> Block
+        compueWithNonce nonce =
+            Block prevHash minerId nonce trans transList
+
+mineBlock :: Block -> Block
+mineBlock block = head $ dropWhile hashed (genNonces block)
+    where
+        hashed :: Block -> Bool
+        hashed block = hashFunc (toStrict $ encode block) < ruleHash
 
 judgeBlock :: MinerState -> Block -> Judgement
 judgeBlock minerState newBlock =
