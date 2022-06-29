@@ -31,7 +31,6 @@ data GetKey = Private | Public deriving Eq
 type Pair = (ByteString, ByteString)
 
 type HSignature = (ByteString, ECDSA.Signature Curve_P521R1)
---type HSignature = Integer
 
 -- | Hash function.
 hashFunc :: DBS.ByteString -> Digest SHA1
@@ -95,36 +94,6 @@ verifyStringMsg pub sig = verify proxy SHA1 dPub sig eMsg
     where
         dPub = throwCryptoError (decodePublic proxy pub)
         eMsg = C8.pack ""
-
-printSignatureInteger :: IO (Signature Curve_P521R1)
-printSignatureInteger = do
-    sig <- join func
-    return sig
-
-func :: IO (IO (ECDSA.Signature Curve_P521R1))
-func = do
-    pair <- createEncodedKeys
-    let pub = getKeyFromPair Public pair
-    let pri = getKeyFromPair Private pair
-    let msg = toStrict $ encode (123 :: Int)
-
-    let signat = signMsg pri msg :: IO (ECDSA.Signature Curve_P521R1)
-    return signat
-
-test = do
-    signature <- printSignatureInteger
-    let right = toStrict $ encode signature
-    let wrong = fromStrict (DBS.drop 10 right)
-
-    let decoded = decodeOrFail $ fromStrict right :: Either (B.ByteString, Data.Binary.Get.ByteOffset, String) (B.ByteString, ByteOffset, ECDSA.Signature Curve_P521R1)
-
-    return decoded
-
-test1 = do
-    ei <- test
-    return $ f ei
-    where
-        f (Right (_, _, sig)) = sig
 
 instance Binary (ECDSA.Signature Curve_P521R1) where
     put signature = do

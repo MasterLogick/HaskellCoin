@@ -26,16 +26,25 @@ getListTransactions id_sender ((Block prevHash minerHash nonce transCount transL
   getTransactionsBlock id_sender transList ++ getListTransactions id_sender xs
 
 -- | Get user balance from transaction list
-getBalance :: SenderHash -> TransList -> Amount
-getBalance _ [] = 0
-getBalance id_sender ((Transaction senderHash recvHash amount _): xs) =
-  amount' + getBalance id_sender xs
+getBalanceTransactions :: SenderHash -> TransList -> Amount
+getBalanceTransactions _ [] = 0
+getBalanceTransactions id_sender ((Transaction senderHash recvHash amount _): xs) =
+  amount' + getBalanceTransactions id_sender xs
  where
     amount'
       | id_sender == senderHash = -amount
       | id_sender == recvHash = amount
       | otherwise = 0
 
+
+getAmountMinedBlocks :: SenderHash -> [Block] -> Amount
+getAmountMinedBlocks _ [] = 0
+getAmountMinedBlocks id_sender ((Block prevHash minerHash nonce transCount transList): xs) 
+  | minerHash == id_sender = 1 + getAmountMinedBlocks id_sender xs
+  | otherwise = getAmountMinedBlocks id_sender xs
+
+getBalance :: SenderHash -> [Block] -> TransList -> Amount
+getBalance id_sender blocks transList = (getAmountMinedBlocks id_sender blocks) * 10 + (getBalanceTransactions id_sender transList)
 
 prettyTransactions :: SenderHash -> TransList -> String
 prettyTransactions _ [] = ""
@@ -56,5 +65,5 @@ userBalance id_sender stateRef = do
     let transactions = (getListTransactions id_sender (blocks miner)) ++ (getTransactionsBlock id_sender pendingTrans)
     putStrLn("From:                                       To:                                        Amount:")
     putStrLn (prettyTransactions id_sender transactions)
-    putStrLn ("Balance: " ++ (show $ getBalance id_sender transactions))
+    putStrLn ("Balance: " ++ (show $ getBalance id_sender (blocks miner) transactions))
     return ()

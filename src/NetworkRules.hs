@@ -12,7 +12,7 @@ checkEnoughCoins minerState senderHash amount
     pendingTrans = pendingTransactions minerState
     minerBlocks = blocks minerState
     userTransactions = getListTransactions senderHash minerBlocks
-    userBalance = getBalance senderHash (userTransactions ++ pendingTrans)
+    userBalance = getBalance senderHash minerBlocks (userTransactions ++ pendingTrans)
 
 data Judgement = Accept | Decline | BranchDivergence
 

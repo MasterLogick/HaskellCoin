@@ -13,7 +13,8 @@ genPair stateRef = do
     print $ DBU.encode private
     putStrLn "\nThis is your public key, feel free to share this one"
     print $ DBU.encode public
-    modifyMVar stateRef (\minerState -> return (minerState{keyPair = (private, public)}, ()))
+    let newId = hashFunc public
+    modifyMVar stateRef (\minerState -> return (minerState{keyPair = (private, public), hashId = newId}, ()))
 
 printPair :: Handler
 printPair stateRef = do
@@ -31,6 +32,6 @@ getId stateRef = do
     modifyMVar stateRef (\minerState -> do
         let public = getKeyFromPair Public $ keyPair minerState
         putStrLn "This is your Id, share this one with your friend, so they will know how to send you tokens"
-        print $ hashFunc public
+        print $ hashId minerState--hashFunc public
         return (minerState, ())
         )

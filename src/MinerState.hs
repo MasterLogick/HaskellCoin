@@ -15,6 +15,7 @@ data MinerState = MinerState {
     pendingTransactions :: [Transaction],
     network :: [NetUser],
     keyPair :: Pair,
+    hashId :: MinerHash,
     shouldExit :: Bool
 }
 

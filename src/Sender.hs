@@ -26,7 +26,7 @@ buildAndSendToNet stateRef = do
         let blockchain = blocks minerState
         let pending = pendingTransactions minerState
         let hashedPrev :: BlockHash; hashedPrev = getBlockHash (fromMaybe fallbackBlock (listToMaybe blockchain))
-        let newBlock :: Block; newBlock = Block hashedPrev fallbackHash 0 (Prelude.length pending) pending
+        let newBlock :: Block; newBlock = Block hashedPrev (hashId minerState) 0 (Prelude.length pending) pending
         propagateLastBlockToNet stateRef
         let newChain :: [Block]; newChain = newBlock : blockchain
         return (minerState{blocks = newChain, pendingTransactions = []}, ())

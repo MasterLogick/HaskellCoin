@@ -139,7 +139,7 @@ startParseCommand minerState = do
 -- | Default entry point.
 run :: IO ()
 run = withSocketsDo $ do
-    initMinerState' <- newMVar (MinerState [] [] [] fallbackPair False)
+    initMinerState' <- newMVar (MinerState [] [] [] fallbackPair fallbackHash False)
     printGreeting
     startParseCommand initMinerState'
     putStrLn "Welcome to Haskell coin blockchain!"
