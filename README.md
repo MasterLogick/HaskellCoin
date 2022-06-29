@@ -9,7 +9,60 @@ In alpha version you can commit transaction from any address to any address with
 Print `show` to list all blocks and transactions in the network.
 
 ## Usage
-The introduction of blockchain increases the speed of exchange, reduces time costs, improves the quality, reliability and availability of services, and offers anonymity. At the same time, transparency and reliability are increased and risks are reduced. At each node of the blockchain system, copies of the entire database are stored and checked among themselves. This makes the system viable even in case of successful hacker attacks on its single nodes.
+To generate the private key (in case if you do not have one) simply answer `Yes` and the program will do everything by itself. For your convenience, the key was encoded in Base64.
+Then, get your `id` by entering: 
+```
+command> id
+```
+If you have saved the private key from your previous session, and at least one machine was up all time you were offline or you saved the blockchain by entering
+```
+command> writeFile /path/to/file
+```
+If you want to load the blockchain from file, run:
+```
+command> loadFile /path/to/file
+```
+Then you share your id with your friends. At first, you will not have any coins binded with your account, to get some, run 
+```
+command> build
+```
+This way, you will generate an empty block which will propagate over the net.
+Speaking of the Net, if you managed to find somebody brave enough to run this project, connect to them by
+```
+command> connect FRIEND's_IP PORT
+```
+Then, to commit transaction, enter:
+```
+command> commit YOUR_ID RECEIVER1_ID COIN_ANOUNT
+command> commit YOUR_ID RECEIVER2_ID COIN_ANOUNT
+...
+command> commit YOUR_ID RECEIVERN_ID COIN_ANOUNT
+```
+Then, again build the block:
+```
+command> build
+```
+To get all blocks, run:
+```
+command> show
+```
+To get your current keypair:
+```
+command> key
+```
+To generate new keypair:
+```
+command> generate
+```
+To get any user's balance:
+```
+command> balance ID 
+```
+At any point, if you get lost, run
+```
+command> help
+```
+This will print help message.
 
 ## Development
 
