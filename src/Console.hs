@@ -6,6 +6,7 @@ import Control.Concurrent.MVar
 import qualified Data.ByteString.Char8 as C8
 import System.IO
 import Network.Socket
+import qualified Data.ByteString.Base64.URL as DBU
 import CryptoMagic
 import MinerState
 import TBlock
@@ -17,13 +18,15 @@ import AccountBalance
 import HelpCommand
 import FilesMagic
 import CryptoHandler
+--import Data.ByteString.Base64 (decodeLenient)
+import Data.ByteString
 
 -- | Output and input in concole with prompt.
-prompt :: String -> IO String
+prompt :: String -> IO ByteString
 prompt text = do
-    putStr text
+    System.IO.putStr text
     hFlush stdout
-    getLine
+    Data.ByteString.getLine
 
 -- | Types of commands
 data Command
@@ -120,14 +123,15 @@ printGreeting = do
 startParseCommand :: MVar MinerState -> IO()
 startParseCommand minerState = do
     putStrLn "Do you want to generate new private key? Yes/No"
-    input <- prompt "answer> "
+    byteInput <- prompt "answer> "
+    let input = C8.unpack byteInput
     case input of
         "Yes" -> genPair minerState
         "No" -> do 
             putStrLn "Enter your private key:"
             privateKey <- prompt "Private key> "
-            let publicKey = generatePublic (C8.pack privateKey)
-            modifyMVar_ minerState (\miner -> return miner{keyPair = ((C8.pack privateKey), publicKey)})
+            let publicKey = generatePublic (DBU.decodeLenient privateKey)
+            modifyMVar_ minerState (\miner -> return miner{keyPair = (DBU.decodeLenient privateKey, publicKey)})
         _ -> do
             putStrLn "ERROR: unrecognized command"
             startParseCommand minerState
@@ -138,7 +142,7 @@ run = withSocketsDo $ do
     initMinerState' <- newMVar (MinerState [] [] [] fallbackPair False)
     printGreeting
     startParseCommand initMinerState'
-    putStrLn("Welcome to Haskell coin blockchain!")
+    putStrLn "Welcome to Haskell coin blockchain!"
     mainLoop initMinerState' parseCommand handleCommand
 
 -- | Processing of commands.
@@ -148,7 +152,8 @@ mainLoop
     -> (Command -> Handler)
     -> IO ()
 mainLoop stateRef parser handler = do
-    input <- prompt "command> "
+    byteInput <- prompt "command> "
+    let input = C8.unpack byteInput
     case parser input of
         Nothing -> do
             putStrLn "ERROR: unrecognized command"

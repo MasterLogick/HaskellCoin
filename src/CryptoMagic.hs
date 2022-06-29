@@ -21,7 +21,7 @@ import Crypto.Random.Types
 import Crypto.PubKey.ECDSA as ECDSA
 import Control.Monad
 import Basement.Compat.Base
-import Data.Binary.Get
+import  Data.Binary.Get
 
 -- | Saving of block's hash.
 type BlockHash = Digest SHA1

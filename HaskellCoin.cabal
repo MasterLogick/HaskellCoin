@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9a269ed2a4b6c53bff0c66954fb5cfd191408f9c4e55067d2391d633f15b3082
+-- hash: ef8b01e3042197ac132f6f2f17b6694018bb9d0b8129c5dd333a6121330ddb0d
 
 name:           HaskellCoin
 version:        0.0.1.0
@@ -45,6 +45,7 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , base64-bytestring >=1.2.1.0
     , basement ==0.0.12
     , binary >=0.8.8.0
     , bytestring ==0.11.3.1
@@ -64,6 +65,7 @@ executable HaskellCoin-exe
   build-depends:
       HaskellCoin
     , base >=4.7 && <5
+    , base64-bytestring >=1.2.1.0
     , basement ==0.0.12
     , binary >=0.8.8.0
     , bytestring ==0.11.3.1
