@@ -151,26 +151,56 @@ handleIncommingMessage stateRef user = do
 
 handleNewBlock :: NetRequestHandler
 handleNewBlock stateRef user = do
-    block' <- recieve user :: IO (Maybe Block)
+    block' <- receive user :: IO (Maybe Block)
     case block' of
         Nothing -> return False
         Just block -> do
-            modifyMVar_ stateRef (\minerState -> do
+            modifyMVar stateRef (\minerState -> do
                 let acceptance = judgeBlock minerState block
                 peerName <- getPeerName (nuSocket user)
                 case acceptance of
                     Accept -> do
-                        putStrLn $ "Accepted new block " ++ (show (getBlockHash block)) ++ " from " ++ (show peerName)
+                        putStrLn ("Accepted new block " ++ (show (getBlockHash block)) ++ " from " ++ (show peerName))
                         propagateLastBlockToNet stateRef
-                        return minerState{ blocks = (block:(blocks minerState)) }
-                    Decline -> do
-                        putStrLn $ "Declined new block " ++ (show (getBlockHash block)) ++ " from " ++ (show peerName)
-                        return minerState
+                        return (minerState{ blocks = (block:(blocks minerState)) }, True)
+                    AlreadyPresent -> do
+                        return (minerState, True)
                     BranchDivergence -> do
-                        putStrLn $ "New block " ++ (show (getBlockHash block)) ++ " from " ++ (show peerName) ++ " created branch divergence"
-                        return minerState
+                        divergedPart' <- receiveDivergedPart block user minerState
+                        case divergedPart' of
+                            Nothing -> return (minerState, False)
+                            Just divergence' -> do
+                                let divergence = block:divergence'
+                                state <- case mergeBranches divergence (blocks minerState) of
+                                    Left merged -> do
+                                        putStrLn ("Local branch selected")
+                                        return minerState{ blocks = merged }   
+                                    Right merged -> do
+                                        putStrLn ("Remote branch selected")
+                                        return minerState{ blocks = merged }
+                                propagateLastBlockToNet stateRef
+                                return (state, True)
                 )
-            return True
+
+receiveDivergedPart :: Block -> NetUser -> MinerState -> IO(Maybe [Block])
+receiveDivergedPart newestDivergedBlock user minerState = do
+    let prevHash = bPrevHash newestDivergedBlock
+    sendAll (nuSocket user) (encode "Gimme block")
+    mPrevBlock <- receive user :: (IO (Maybe Block))
+    case mPrevBlock of
+        Nothing -> return Nothing
+        Just receivedBlock -> do
+            let acceptance = judgeBlock minerState receivedBlock
+            case acceptance of
+                Accept -> do
+                    return (Just [receivedBlock, (getNewestBlock minerState)])
+                AlreadyPresent -> do
+                    return (Just [receivedBlock])
+                BranchDivergence -> do
+                    mDivergedRemainder <- receiveDivergedPart receivedBlock user minerState
+                    return (fmap (receivedBlock:) mDivergedRemainder)
+
+
 
 handleLastHashRequest :: NetRequestHandler
 handleLastHashRequest stateRef user = do
@@ -181,7 +211,7 @@ handleLastHashRequest stateRef user = do
 
 handleBlockRequest :: NetRequestHandler
 handleBlockRequest stateRef user = do
-    requestedHash' <- recieve user :: IO (Maybe BlockHash)
+    requestedHash' <- receive user :: IO (Maybe BlockHash)
     case requestedHash' of
         Nothing -> return False
         Just requestedHash -> do
@@ -222,7 +252,7 @@ requestLastBlockHash stateRef user = withService stateRef user $ do
     let sock = nuSocket user
     sockName <- getPeerName sock
     sendAll sock (encode "Gimme last hash")
-    recieve user :: IO (Maybe BlockHash)
+    receive user :: IO (Maybe BlockHash)
     
 
 
@@ -250,9 +280,9 @@ canService user = modifyMVar (nuService user) (\isBusy -> return (True, not isBu
 
 
 -- todo add timeout
-recieve :: Binary a => NetUser -> IO (Maybe a)
-recieve user = join $ modifyMVar (nuBuffer user) (\buffer ->
+receive :: Binary a => NetUser -> IO (Maybe a)
+receive user = join $ modifyMVar (nuBuffer user) (\buffer ->
         case decodeOrFail buffer of
-            Left _ -> return (buffer, recieve user)
+            Left _ -> return (buffer, receive user)
             Right (remainder, _, parsedVal) -> return (remainder, return (Just parsedVal))
         )
