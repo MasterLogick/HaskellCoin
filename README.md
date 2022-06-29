@@ -10,6 +10,9 @@ Print `help` to get the list of commands.
 In alpha version you can commit transaction from any address to any address without limitations on amount. Just enter `commit` with user hashes and amount and enter `build` to create new block in the network.
 Print `show` to list all blocks and transactions in the network.
 
+## Usage
+The introduction of blockchain increases the speed of exchange, reduces time costs, improves the quality, reliability and availability of services, and offers anonymity. At the same time, transparency and reliability are increased and risks are reduced. At each node of the blockchain system, copies of the entire database are stored and checked among themselves. This makes the system viable even in case of successful hacker attacks on its single nodes.
+
 ## Development
 
 The project is developed with both stack and cabal.
