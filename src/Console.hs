@@ -116,12 +116,29 @@ printGreeting = do
     putStrLn "                                                 "
     putStrLn "                                                 "
     putStrLn "Print help to get command list and description."
+    
+startParseCommand :: MVar MinerState -> IO()
+startParseCommand minerState = do
+    putStrLn "Do you want to generate new private key? Yes/No"
+    input <- prompt "answer> "
+    case input of
+        "Yes" -> genPair minerState
+        "No" -> do 
+            putStrLn "Enter your private key:"
+            privateKey <- prompt "Private key> "
+            let publicKey = generatePublic (C8.pack privateKey)
+            modifyMVar_ minerState (\miner -> return miner{keyPair = ((C8.pack privateKey), publicKey)})
+        _ -> do
+            putStrLn "ERROR: unrecognized command"
+            startParseCommand minerState
 
 -- | Default entry point.
 run :: IO ()
 run = withSocketsDo $ do
     initMinerState' <- newMVar (MinerState [] [] [] fallbackPair False)
     printGreeting
+    startParseCommand initMinerState'
+    putStrLn("Welcome to Haskell coin blockchain!")
     mainLoop initMinerState' parseCommand handleCommand
 
 -- | Processing of commands.
