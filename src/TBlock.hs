@@ -15,6 +15,15 @@ data Block = Block {
     bTransList :: TransList
 }
 
+genesisBlock :: Block
+genesisBlock = Block {
+    bPrevHash = fallbackHash,
+    bMinerHash = hashFunc $ getKeyFromPair Public fallbackPair,
+    bNonce = 0,
+    bTransCount = 0,
+    bTransList = []
+}
+
 -- | Fallback block to use in case of some extraordinary situations
 fallbackBlock :: Block
 fallbackBlock = Block fallbackHash fallbackHash 0 0 []
@@ -40,11 +49,11 @@ instance Binary Block where
         return (Block prevHash minerHash nonce transCount transList)
 
 instance Eq Block where
-    (==) block1 block2 = getBlockHash block1 == (getBlockHash block2)
+    (==) block1 block2 = getBlockHash block1 == getBlockHash block2
 
 -- | data Transaction stores information about sender, recipient, amount of transaction
 -- | and also signature
-data Transaction = Transaction TransactionCandidate HSignature
+data Transaction = Transaction SenderHash RecvHash Amount HSignature
 
 -- | this instance is neccessary for converting transactions into bytes and also bytes into data block 
 instance Binary TransactionCandidate where
@@ -60,14 +69,18 @@ instance Binary TransactionCandidate where
         return (TransactionCandidate sender receiver amount)
 
 instance Binary Transaction where
-    put (Transaction candidate signature) = do
-        put candidate
+    put (Transaction sender receiver amount signature) = do
+        put sender
+        put receiver
+        put amount
         put signature
     
     get = do
-        candidate <- get :: Get TransactionCandidate
+        sender <- get :: Get SenderHash
+        receiver <- get :: Get RecvHash
+        amount <- get :: Get Amount 
         signature <- get :: Get HSignature
-        return (Transaction candidate signature)
+        return (Transaction sender receiver amount signature)
 
 data TransactionCandidate = TransactionCandidate SenderHash RecvHash Amount
 -- | neccessary type aliases
