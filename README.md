@@ -2,7 +2,7 @@
 
 [![Haskell CI Cabal](https://github.com/MasterLogick/HaskellCoin/actions/workflows/haskell.yml/badge.svg?branch=master)](https://github.com/MasterLogick/HaskellCoin/actions/workflows/haskell.yml)
 
-![img](https://imgur.com/c6YLPwh)
+![img](https://i.imgur.com/c6YLPwh)
 Yet another blockchain but written in Haskell this time.
 
 ![Alpha version example](images/example1.png)
