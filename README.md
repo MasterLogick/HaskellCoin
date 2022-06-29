@@ -1,10 +1,8 @@
 # HaskellCoin
 
-![2022-06-29 15 52 34](https://user-images.githubusercontent.com/87667725/176442084-0439de5f-89ab-4b16-b3ac-e69c48b6ffb9.jpg)
-
 Yet another blockchain but written in Haskell this time.
 
-![Alpha version example](images/example1.png)
+![2022-06-29 15 52 34](https://user-images.githubusercontent.com/87667725/176442084-0439de5f-89ab-4b16-b3ac-e69c48b6ffb9.jpg)
 
 Print `help` to get the list of commands.
 In alpha version you can commit transaction from any address to any address without limitations on amount. Just enter `commit` with user hashes and amount and enter `build` to create new block in the network.
