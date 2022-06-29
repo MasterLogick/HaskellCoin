@@ -126,16 +126,25 @@ startParseCommand minerState = do
     byteInput <- prompt "answer> "
     let input = C8.unpack byteInput
     case input of
-        "Yes" -> genPair minerState
-        "No" -> do 
+        "Yes" -> accept
+        "yes" -> accept
+        "y"   -> accept
+        "Y"   -> accept
+        "No"  -> regect
+        "no"  -> regect
+        "n"   -> regect
+        "N"   -> regect  
+        _ -> do
+            putStrLn "ERROR: unrecognized command"
+            startParseCommand minerState
+    where 
+        accept = genPair minerState
+        regect = do
             putStrLn "Enter your private key:"
             privateKey <- prompt "Private key> "
             let publicKey = generatePublic (DBU.decodeLenient privateKey)
             modifyMVar_ minerState (\miner -> return miner{keyPair = (DBU.decodeLenient privateKey, publicKey)})
-        _ -> do
-            putStrLn "ERROR: unrecognized command"
-            startParseCommand minerState
-
+    
 -- | Default entry point.
 run :: IO ()
 run = withSocketsDo $ do
