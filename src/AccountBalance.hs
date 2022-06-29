@@ -8,12 +8,12 @@ import TBlock
 
 -- | Checks if id_sender in this transaction
 getTransaction :: SenderHash -> Transaction -> TransList
-getTransaction id_sender (Transaction (TransactionCandidate senderHash recvHash amount) sign)
- | id_sender == senderHash = [Transaction (TransactionCandidate senderHash recvHash amount) sign]
- | id_sender == recvHash = [Transaction (TransactionCandidate senderHash recvHash amount) sign]
+getTransaction id_sender (Transaction senderHash recvHash amount sign)
+ | id_sender == senderHash = [Transaction senderHash recvHash amount sign]
+ | id_sender == recvHash = [Transaction senderHash recvHash amount sign]
  | otherwise = []
 
- -- | Getting transaction of user from transaction list
+-- | Getting transaction of user from transaction list
 getTransactionsBlock :: SenderHash -> TransList -> TransList
 getTransactionsBlock _ [] = []
 getTransactionsBlock id_sender (transition: transList) =
@@ -28,7 +28,7 @@ getListTransactions id_sender ((Block prevHash minerHash nonce transCount transL
 -- | Get user balance from transaction list
 getBalance :: SenderHash -> TransList -> Amount
 getBalance _ [] = 0
-getBalance id_sender ((Transaction (TransactionCandidate senderHash recvHash amount) _): xs) =
+getBalance id_sender ((Transaction senderHash recvHash amount _): xs) =
   amount' + getBalance id_sender xs
  where
     amount'
@@ -39,7 +39,7 @@ getBalance id_sender ((Transaction (TransactionCandidate senderHash recvHash amo
 
 prettyTransactions :: SenderHash -> TransList -> String
 prettyTransactions _ [] = ""
-prettyTransactions id_sender ((Transaction (TransactionCandidate senderHash recvHash amount) sign) : xs) = 
+prettyTransactions id_sender ((Transaction senderHash recvHash amount sign) : xs) = 
   result ++ (prettyTransactions id_sender xs)
   where
     result

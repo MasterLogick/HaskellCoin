@@ -8,7 +8,7 @@ import TBlock
 -- | Getting of transactions' description.
 getEnumeratedTransList :: Integer -> [Transaction] -> String
 getEnumeratedTransList _ [] = ""
-getEnumeratedTransList num ((Transaction (TransactionCandidate senderHash recvHash amount) _signature): xs) 
+getEnumeratedTransList num ((Transaction senderHash recvHash amount _signature): xs) 
     = "~~~~~~~~~~~~~~~\nTransaction number: " ++ show num 
     ++ "\nSender Hash: " ++ show senderHash 
     ++ "\nRecv Hash: "   ++ show recvHash 
