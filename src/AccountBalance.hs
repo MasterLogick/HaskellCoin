@@ -52,7 +52,8 @@ prettyTransactions id_sender ((Transaction senderHash recvHash amount sign) : xs
 userBalance :: SenderHash -> Handler
 userBalance id_sender stateRef = do
     miner <- readMVar stateRef
-    let transactions = getListTransactions id_sender (blocks miner)
+    let pendingTrans = pendingTransactions miner
+    let transactions = (getListTransactions id_sender (blocks miner)) ++ (getTransactionsBlock id_sender pendingTrans)
     putStrLn("From:                                       To:                                        Amount:")
     putStrLn (prettyTransactions id_sender transactions)
     putStrLn ("Balance: " ++ (show $ getBalance id_sender transactions))

@@ -2,6 +2,17 @@ module NetworkRules where
 
 import MinerState
 import TBlock
+import AccountBalance
+
+checkEnoughCoins :: MinerState -> SenderHash -> Amount -> Bool
+checkEnoughCoins minerState senderHash amount
+  | userBalance >= amount = True
+  | otherwise = False
+  where
+    pendingTrans = pendingTransactions minerState
+    minerBlocks = blocks minerState
+    userTransactions = getListTransactions senderHash minerBlocks
+    userBalance = getBalance senderHash (userTransactions ++ pendingTrans)
 
 data Judgement = Accept | Decline | BranchDivergence
 
