@@ -15,6 +15,15 @@ data Block = Block {
     bTransList :: TransList
 }
 
+genesisBlock :: Block
+genesisBlock = Block {
+    bPrevHash = fallbackHash,
+    bMinerHash = hashFunc $ getKeyFromPair Public fallbackPair,
+    bNonce = 0,
+    bTransCount = 0,
+    bTransList = []
+}
+
 -- | Fallback block to use in case of some extraordinary situations
 fallbackBlock :: Block
 fallbackBlock = Block fallbackHash fallbackHash 0 0 []
@@ -40,7 +49,7 @@ instance Binary Block where
         return (Block prevHash minerHash nonce transCount transList)
 
 instance Eq Block where
-    (==) block1 block2 = getBlockHash block1 == (getBlockHash block2)
+    (==) block1 block2 = getBlockHash block1 == getBlockHash block2
 
 -- | data Transaction stores information about sender, recipient, amount of transaction
 -- | and also signature
