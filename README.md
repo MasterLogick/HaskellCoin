@@ -13,8 +13,9 @@ To generate the private key (in case if you do not have one) simply answer `Yes`
 Then, get your `id` by entering: 
 ```
 command> id
-![tg_image_7448217](https://user-images.githubusercontent.com/30959736/176492679-dc281054-65e5-4664-8eb8-00eaafd8c2cf.jpeg)
 ```
+![tg_image_7448217](https://user-images.githubusercontent.com/30959736/176492679-dc281054-65e5-4664-8eb8-00eaafd8c2cf.jpeg)
+
 If you have saved the private key from your previous session, and at least one machine was up all time you were offline or you saved the blockchain by entering
 ```
 command> writeFile /path/to/file
@@ -38,10 +39,9 @@ command> commit YOUR_ID RECEIVER1_ID COIN_ANOUNT
 command> commit YOUR_ID RECEIVER2_ID COIN_ANOUNT
 ...
 command> commit YOUR_ID RECEIVERN_ID COIN_ANOUNT
-
+```
 ![tg_image_1155102309](https://user-images.githubusercontent.com/30959736/176492458-4d4b0e35-6287-45c5-987e-1f38439e69cb.jpeg)
 
-```
 Then, again build the block:
 ```
 command> build
@@ -49,28 +49,33 @@ command> build
 To get all blocks, run:
 ```
 command> show
-![tg_image_507900195](https://user-images.githubusercontent.com/30959736/176493021-8cedccef-4ff4-4509-9769-ac20691727e2.jpeg)
 ```
+![tg_image_507900195](https://user-images.githubusercontent.com/30959736/176493021-8cedccef-4ff4-4509-9769-ac20691727e2.jpeg)
+
 To get your current keypair:
 ```
 command> key
-![tg_image_3959235025](https://user-images.githubusercontent.com/30959736/176493200-9122f2ad-9d5e-4427-baae-df28143a0cda.jpeg)
 ```
+![tg_image_3959235025](https://user-images.githubusercontent.com/30959736/176493200-9122f2ad-9d5e-4427-baae-df28143a0cda.jpeg)
+
 To generate new keypair:
 ```
 command> generate
-![tg_image_4245662719](https://user-images.githubusercontent.com/30959736/176493395-ecc31af8-1b0f-4b74-8c26-56ea52498c18.jpeg)
 ```
+![tg_image_4245662719](https://user-images.githubusercontent.com/30959736/176493395-ecc31af8-1b0f-4b74-8c26-56ea52498c18.jpeg)
+
 To get any user's balance:
 ```
 command> balance ID 
-![tg_image_1487400450](https://user-images.githubusercontent.com/30959736/176493774-b8a16bbd-03db-4bd3-9601-d091c394eba0.jpeg)
 ```
+![tg_image_1487400450](https://user-images.githubusercontent.com/30959736/176493774-b8a16bbd-03db-4bd3-9601-d091c394eba0.jpeg)
+
 At any point, if you get lost, run
 ```
 command> help
-![tg_image_1856208515](https://user-images.githubusercontent.com/30959736/176494105-6571f6f6-0724-43cc-ae51-05dc5bf57afa.jpeg)
 ```
+![tg_image_1856208515](https://user-images.githubusercontent.com/30959736/176494105-6571f6f6-0724-43cc-ae51-05dc5bf57afa.jpeg)
+
 This will print help message.
 
 ## Development
