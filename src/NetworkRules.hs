@@ -6,6 +6,7 @@ import MinerState
 import TBlock
 import AccountBalance
 import CryptoMagic
+import Control.Exception
 
 data Judgement = Accept | AlreadyPresent | BranchDivergence -- | BadSignature
 
@@ -27,11 +28,13 @@ genNonces (Block prevHash minerId _ trans transList) = blocks
         compueWithNonce nonce =
             Block prevHash minerId nonce trans transList
 
-mineBlock :: Block -> Block
-mineBlock block = head $ dropWhile hashed (genNonces block)
-    where
-        hashed :: Block -> Bool
-        hashed block = hashFunc (toStrict $ encode block) < ruleHash
+mineBlock :: Block -> IO Block
+mineBlock block = evaluate (head (dropWhile (not . validateBlockNonce) (genNonces block)))
+
+validateBlockNonce :: Block -> Bool
+validateBlockNonce block = case show (hashFunc (toStrict $ encode block)) of
+    '0':'0':'0':'0':'0':_ -> True
+    _ -> False
 
 judgeBlock :: MinerState -> Block -> Judgement
 judgeBlock minerState newBlock =
