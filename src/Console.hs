@@ -109,14 +109,15 @@ parseCommand input =
 
 printGreeting :: IO()
 printGreeting = do
-    putStrLn " _   _           _        _ _  ____      _       "
-    putStrLn "| | | | __ _ ___| | _____| | |/ ___|___ (_)_ __  "
-    putStrLn "| |_| |/ _` / __| |/ / _ \\ | | |   / _ \\| | '_ \\ "
-    putStrLn "|  _  | (_| \\__ \\   <  __/ | | |__| (_) | | | | |"
-    putStrLn "|_| |_|\\__,_|___/_|\\_\\___|_|_|\\____\\___/|_|_| |_|"
-    putStrLn "https://github.com/MasterLogick/HaskellCoin      "
-    putStrLn "The best blockchain ever. Fully written in the best language ever."
-    putStrLn "                                                 "
+    putStrLn "+-------------------------------------------------+"
+    putStrLn "| _   _           _        _ _  ____      _       |"
+    putStrLn "|| | | | __ _ ___| | _____| | |/ ___|___ (_)_ __  |"
+    putStrLn "|| |_| |/ _` / __| |/ / _ \\ | | |   / _ \\| | '_ \\ |"
+    putStrLn "||  _  | (_| \\__ \\   <  __/ | | |__| (_) | | | | ||"
+    putStrLn "||_| |_|\\__,_|___/_|\\_\\___|_|_|\\____\\___/|_|_| |_||"
+    putStrLn "+-------------------------------------------------+"
+    putStrLn " The best blockchain written in the best language."
+    putStrLn "    https://github.com/MasterLogick/HaskellCoin   "
     putStrLn "                                                 "
     putStrLn "Print help to get command list and description."
     
