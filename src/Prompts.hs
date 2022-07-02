@@ -118,3 +118,22 @@ startParseListen stateRef = do
             let userPort = C8.unpack port
             setupServer userIp userPort stateRef
         reject = return ()
+
+-- | Starts parsing command for writing backup of chain into file.
+startParseWrite :: MVar MinerState -> IO()
+startParseWrite stateRef = do
+    putStrLn "Do you want to write backup of chain into file? Yes/No"
+    byteInput <- prompt "answer> "
+    let input = C8.unpack byteInput
+    case checkUserResponse input of
+        Accepted -> accept
+        Reject -> reject
+        WrongResponce -> do
+            putStrLn "ERROR: unrecognized command"
+            startParseBackup stateRef
+    where 
+        accept = do
+            path <- prompt "Enter your path:"
+            let userPath = C8.unpack path
+            writeBlocks userPath stateRef
+        reject = return ()

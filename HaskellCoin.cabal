@@ -39,6 +39,7 @@ library
       NetworkRules
       Sender
       TBlock
+      Prompts
   other-modules:
       Paths_HaskellCoin
   hs-source-dirs:
