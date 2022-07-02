@@ -150,7 +150,14 @@ startParseCommand minerState = do
 -- | Default entry point.
 run :: IO ()
 run = withSocketsDo $ do
-    initMinerState' <- newMVar (MinerState [] [] [] fallbackPair fallbackHash False)
+    initMinerState' <- newMVar (MinerState {
+        blocks = [genesisBlock],
+        pendingTransactions =  [],
+        network = [],
+        keyPair = fallbackPair,
+        hashId = fallbackHash,
+        shouldExit = False
+        })
     printGreeting
     startParseCommand initMinerState'
     putStrLn "Welcome to Haskell coin blockchain!"
