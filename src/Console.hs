@@ -11,6 +11,7 @@ import qualified Data.ByteString.Base64.URL as DBU
 import CryptoMagic
 import MinerState
 import TBlock
+import Prompts
 import Commiter
 import Sender
 import Explorer
@@ -123,39 +124,6 @@ printGreeting = do
     putStrLn "                                                 "
     putStrLn "Print help to get command list and description."
 
-data ResponceJudgement = Accepted | Reject | WrongResponce
-checkUserResponse :: String -> ResponceJudgement
-checkUserResponse response = 
-    case response of
-        "Yes" -> Accepted
-        "yes" -> Accepted
-        "y"   -> Accepted
-        "Y"   -> Accepted
-        "No"  -> Reject
-        "no"  -> Reject
-        "n"   -> Reject
-        "N"   -> Reject
-        _     ->  WrongResponce
-
--- | Starts parsing command for getting private key.
-startParseCommand :: MVar MinerState -> IO()
-startParseCommand minerState = do
-    putStrLn "Do you want to generate new private key? Yes/No"
-    byteInput <- prompt "answer> "
-    let input = C8.unpack byteInput
-    case checkUserResponse input of
-        Accepted -> accept
-        Reject -> regect
-        WrongResponce -> do
-            putStrLn "ERROR: unrecognized command"
-            startParseCommand minerState
-    where 
-        accept = genPair minerState
-        regect = do
-            putStrLn "Enter your private key:"
-            privateKey <- prompt "Private key> "
-            publicKey <- CE.evaluate $ generatePublic (DBU.decodeLenient privateKey)
-            modifyMVar_ minerState (\miner -> return miner{keyPair = (DBU.decodeLenient privateKey, publicKey)})
     
 -- | Default entry point.
 run :: IO ()
