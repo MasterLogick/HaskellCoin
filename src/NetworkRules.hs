@@ -2,11 +2,18 @@ module NetworkRules where
 
 import Data.Binary
 import Data.ByteString hiding (head, dropWhile, elem, map, null, break, length, reverse)
+import Crypto.PubKey.ECDSA 
 import MinerState
 import TBlock
 import AccountBalance
 import CryptoMagic
 import Control.Exception
+import Crypto.Hash
+import Crypto.ECC
+import Crypto.Hash
+import Crypto.Error
+import Crypto.Random.Types
+import Crypto.PubKey.ECDSA as ECDSA
 
 data Judgement = Accept | AlreadyPresent | BranchDivergence -- | BadSignature
 
@@ -35,6 +42,11 @@ validateBlockNonce :: Block -> Bool
 validateBlockNonce block = case show (hashFunc (toStrict $ encode block)) of
     '0':'0':'0':'0':'0':_ -> True
     _ -> False
+
+-- | Validates transaction signature
+validateTransaction :: Transaction -> Bool
+validateTransaction (Transaction _ _ _ (pubkey, signature)) =
+    verifyStringMsg pubkey signature
 
 judgeBlock :: MinerState -> Block -> Judgement
 judgeBlock minerState newBlock =
