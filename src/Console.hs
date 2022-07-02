@@ -3,6 +3,7 @@ module Console where
 
 import Text.Read (readMaybe)
 import Control.Concurrent.MVar
+import qualified Control.Exception as CE 
 import qualified Data.ByteString.Char8 as C8
 import System.IO
 import Network.Socket
@@ -145,7 +146,7 @@ startParseCommand minerState = do
         regect = do
             putStrLn "Enter your private key:"
             privateKey <- prompt "Private key> "
-            let publicKey = generatePublic (DBU.decodeLenient privateKey)
+            publicKey <- CE.evaluate $ generatePublic (DBU.decodeLenient privateKey)
             modifyMVar_ minerState (\miner -> return miner{keyPair = (DBU.decodeLenient privateKey, publicKey)})
     
 -- | Default entry point.
