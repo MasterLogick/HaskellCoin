@@ -69,7 +69,7 @@ startParseBackup stateRef = do
         Reject -> reject
         WrongResponce -> do
             putStrLn "ERROR: unrecognized command"
-            startParseBackup path
+            startParseBackup stateRef
     where 
         accept = do
             path <- prompt "Enter your path:"
@@ -87,7 +87,7 @@ startParseConnect stateRef = do
         Reject -> reject
         WrongResponce -> do
             putStrLn "ERROR: unrecognized command"
-            startParseConnect path
+            startParseConnect stateRef
     where 
         accept = do
             ip <- prompt "Enter your remote ip:"
@@ -106,7 +106,7 @@ startParseListen stateRef = do
         Reject -> reject
         WrongResponce -> do
             putStrLn "ERROR: unrecognized command"
-            startParseListen path
+            startParseListen stateRef
     where 
         accept = do
             ip <- prompt "Enter your ip:"
