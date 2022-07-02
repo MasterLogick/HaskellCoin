@@ -22,13 +22,6 @@ import FilesMagic
 import CryptoHandler
 import Data.ByteString
 
--- | Outputs and inputs in concole with prompt.
-prompt :: String -> IO ByteString
-prompt text = do
-    System.IO.putStr text
-    hFlush stdout
-    Data.ByteString.getLine
-
 -- | Types of commands.
 data Command
     = Exit_

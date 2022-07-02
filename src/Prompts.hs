@@ -73,7 +73,8 @@ startParseBackup stateRef = do
     where 
         accept = do
             path <- prompt "Enter your path:"
-            loadBlocks path stateRef
+            let userPath = C8.unpack path
+            loadBlocks userPath stateRef
         reject = return ()
 
 -- | Starts parsing command for connecting to the network.
@@ -92,7 +93,9 @@ startParseConnect stateRef = do
         accept = do
             ip <- prompt "Enter your remote ip:"
             port <- prompt "Enter your remote port:"
-            connectAndSync ip port stateRef
+            let userIp = C8.unpack ip
+            let userPort = C8.unpack port
+            connectAndSync userIp userPort stateRef
         reject = return ()
 
 -- | Starts parsing command for listening network.
@@ -111,5 +114,7 @@ startParseListen stateRef = do
         accept = do
             ip <- prompt "Enter your ip:"
             port <- prompt "Enter your port:"
-            setupServer ip port stateRef
+            let userIp = C8.unpack ip
+            let userPort = C8.unpack port
+            setupServer userIp userPort stateRef
         reject = return ()
