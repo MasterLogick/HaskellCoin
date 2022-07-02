@@ -11,6 +11,8 @@ import System.IO
 import Data.Complex (imagPart)
 import CryptoHandler
 import CryptoMagic
+import FilesMagic
+import NetworkMagic
 
 data ResponceJudgement = Accepted | Reject | WrongResponce
 
@@ -43,14 +45,71 @@ startParseCommand minerState = do
     let input = C8.unpack byteInput
     case checkUserResponse input of
         Accepted -> accept
-        Reject -> regect
+        Reject -> reject
         WrongResponce -> do
             putStrLn "ERROR: unrecognized command"
             startParseCommand minerState
     where 
         accept = genPair minerState
-        regect = do
+        reject = do
             putStrLn "Enter your private key:"
             privateKey <- prompt "Private key> "
             publicKey <- CE.evaluate $ generatePublic (DBU.decodeLenient privateKey)
             modifyMVar_ minerState (\miner -> return miner{keyPair = (DBU.decodeLenient privateKey, publicKey)})
+
+
+-- | Starts parsing command for uploading backup of chain from file.
+startParseBackup :: MVar MinerState -> IO()
+startParseBackup stateRef = do
+    putStrLn "Do you want to load backup of chain from file? Yes/No"
+    byteInput <- prompt "answer> "
+    let input = C8.unpack byteInput
+    case checkUserResponse input of
+        Accepted -> accept
+        Reject -> reject
+        WrongResponce -> do
+            putStrLn "ERROR: unrecognized command"
+            startParseBackup path
+    where 
+        accept = do
+            path <- prompt "Enter your path:"
+            loadBlocks path stateRef
+        reject = return ()
+
+-- | Starts parsing command for connecting to the network.
+startParseConnect :: MVar MinerState -> IO()
+startParseConnect stateRef = do
+    putStrLn "Do you want to connect to the network? Yes/No"
+    byteInput <- prompt "answer> "
+    let input = C8.unpack byteInput
+    case checkUserResponse input of
+        Accepted -> accept
+        Reject -> reject
+        WrongResponce -> do
+            putStrLn "ERROR: unrecognized command"
+            startParseConnect path
+    where 
+        accept = do
+            ip <- prompt "Enter your remote ip:"
+            port <- prompt "Enter your remote port:"
+            connectAndSync ip port stateRef
+        reject = return ()
+
+-- | Starts parsing command for listening network.
+startParseListen :: MVar MinerState -> IO()
+startParseListen stateRef = do
+    putStrLn "Do you want to start listening? Yes/No"
+    byteInput <- prompt "answer> "
+    let input = C8.unpack byteInput
+    case checkUserResponse input of
+        Accepted -> accept
+        Reject -> reject
+        WrongResponce -> do
+            putStrLn "ERROR: unrecognized command"
+            startParseListen path
+    where 
+        accept = do
+            ip <- prompt "Enter your ip:"
+            port <- prompt "Enter your port:"
+            setupServer ip port stateRef
+        reject = return ()
