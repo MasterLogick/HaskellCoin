@@ -2,6 +2,7 @@ module HelpCommand where
 
 import MinerState
 
+-- | Prints help command.
 printHelp :: Handler
 printHelp _ = do
     putStrLn "exit                                              - exit from program"

@@ -9,12 +9,12 @@ import NetworkMagic
 
 import Data.Binary
 import qualified Data.ByteString.Lazy as LB
--- import System.Directory
 
 import Control.Concurrent.MVar
 
 type Path = String
 
+-- | Loads blocks from file using Path.
 loadBlocks :: Path -> Handler
 loadBlocks filePath stateRef = do
     bytes <- LB.readFile filePath
@@ -32,6 +32,7 @@ loadBlocks filePath stateRef = do
                     return minerState{ blocks = merged }
             )
 
+-- | Writes blocks to file using Path.
 writeBlocks :: Path -> Handler
 writeBlocks filePath stateRef = do
     miner <- readMVar stateRef

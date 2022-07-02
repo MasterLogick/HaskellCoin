@@ -9,10 +9,9 @@ import MinerState
 import TBlock
 import NetworkRules
 
--- | Adding new transaction to pending block.
+-- | Adds new transaction to pending block.
 commitTransaction :: TransactionCandidate -> Handler
 commitTransaction candidate@(TransactionCandidate sender receiver amount) stateRef = do
-    --let private = getKeyFromPair Private $ keyPair miner
     miner <- readMVar stateRef
     let enoughCoins = checkEnoughCoins miner sender amount
     case enoughCoins of

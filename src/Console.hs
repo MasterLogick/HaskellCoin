@@ -18,17 +18,16 @@ import AccountBalance
 import HelpCommand
 import FilesMagic
 import CryptoHandler
---import Data.ByteString.Base64 (decodeLenient)
 import Data.ByteString
 
--- | Output and input in concole with prompt.
+-- | Outputs and inputs in concole with prompt.
 prompt :: String -> IO ByteString
 prompt text = do
     System.IO.putStr text
     hFlush stdout
     Data.ByteString.getLine
 
--- | Types of commands
+-- | Types of commands.
 data Command
     = Exit_
     | Commit TransactionCandidate
@@ -44,14 +43,14 @@ data Command
     | Id
     | Help
 
--- | Exit from programm
+-- | Exits from programm.
 handleExit_ :: Handler
 handleExit_ stateRef = do
     modifyMVar stateRef (\miner -> 
         return (miner{shouldExit = True},())) 
     putStrLn "Bye!"
 
--- | Handling of command.
+-- | Handles command.
 handleCommand :: Command -> Handler
 handleCommand command = case command of
   Exit_ -> handleExit_
@@ -69,7 +68,7 @@ handleCommand command = case command of
   Help -> printHelp
 
 
--- | Parsing of command.
+-- | Parses command.
 parseCommand :: String -> Maybe Command
 parseCommand input =
     case input of
@@ -107,6 +106,7 @@ parseCommand input =
                     Just (WriteBlocks path)
                 _ -> Nothing
 
+-- | Prints greeting to console.
 printGreeting :: IO()
 printGreeting = do
     putStrLn "+-------------------------------------------------+"
@@ -121,7 +121,8 @@ printGreeting = do
     putStrLn "    https://github.com/MasterLogick/HaskellCoin   "
     putStrLn "                                                 "
     putStrLn "Print help to get command list and description."
-    
+
+-- | Starts parsing command for getting private key.
 startParseCommand :: MVar MinerState -> IO()
 startParseCommand minerState = do
     putStrLn "Do you want to generate new private key? Yes/No"
@@ -163,7 +164,7 @@ run = withSocketsDo $ do
     putStrLn "Welcome to Haskell coin blockchain!"
     mainLoop initMinerState' parseCommand handleCommand
 
--- | Processing of commands.
+-- | Processes commands.
 mainLoop
     :: MVar MinerState
     -> (String -> Maybe Command)

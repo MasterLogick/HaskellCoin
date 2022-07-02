@@ -5,6 +5,7 @@ import qualified Data.ByteString.Base64.URL as DBU
 import CryptoMagic
 import MinerState
 
+-- | Generates and prints public and private keys of user.
 genPair :: Handler
 genPair stateRef = do
     (private, public) <- createEncodedKeys
@@ -16,6 +17,7 @@ genPair stateRef = do
     let newId = hashFunc public
     modifyMVar stateRef (\minerState -> return (minerState{keyPair = (private, public), hashId = newId}, ()))
 
+-- | Prints public and private keys of user.
 printPair :: Handler
 printPair stateRef = do
     modifyMVar stateRef (\minerState -> do
@@ -27,6 +29,7 @@ printPair stateRef = do
         return (minerState, ())
         )
 
+-- | Prints user Id.
 getId :: Handler
 getId stateRef = do
     modifyMVar stateRef (\minerState -> do

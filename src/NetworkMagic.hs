@@ -67,13 +67,13 @@ For this purpose every active socket connection has it's own thread that constan
 To provide mutual access for user socket user object has nuService flag. This flag is set iff some thread interacts with user and all over threads must wait. Otherwise, user is free to be serviced. Use withService if you want to have a mutual access to the user.
 -}
 
--- | Type for network incoming request handlers
+-- | Type for network incoming request handlers.
 type NetRequestHandler = MVar MinerState -> NetUser -> IO Bool
 
--- | Network infrastructure management functions
+-- | Network infrastructure management functions.
 
--- | Connsole command "start server" handler
--- | Starts server socket and forks with listening loop
+-- | Connsole command "start server" handler.
+-- | Starts server socket and forks with listening loop.
 setupServer :: String -> String -> Handler
 setupServer ip port stateRef = do
     let hints = defaultHints { addrFlags = [AI_NUMERICHOST, AI_NUMERICSERV], addrSocketType = Stream }
@@ -86,8 +86,8 @@ setupServer ip port stateRef = do
     forkIO $ (serverHandleLoop stateRef serverSocket)
     return ()
 
--- | Server socket listening loop
--- | Records incoming connections and starts client request handlers  
+-- | Server socket listening loop.
+-- | Records incoming connections and starts client request handlers.
 serverHandleLoop :: MVar MinerState -> Socket -> IO ()
 serverHandleLoop stateRef serverSocket = do
     (client, addr) <- accept serverSocket
@@ -95,8 +95,8 @@ serverHandleLoop stateRef serverSocket = do
     handleNewConnection stateRef client
     serverHandleLoop stateRef serverSocket
 
--- | Console command "connect" handler
--- | Connects to the specified server and forks with client request handler
+-- | Console command "connect" handler.
+-- | Connects to the specified server and forks with client request handler.
 connectAndSync :: String -> String -> Handler
 connectAndSync ip port stateRef = do
     let hints = defaultHints { addrFlags = [AI_NUMERICHOST, AI_NUMERICSERV], addrSocketType = Stream }
@@ -112,7 +112,7 @@ connectAndSync ip port stateRef = do
         Just blockHash -> do
             putStrLn $ "Recieved last block hash " ++ (show blockHash) ++ " from " ++ (show peerName)
 
--- | Records new connectionin miner state and forks with client request handler
+-- | Records new connection in miner state and forks with client request handler.
 handleNewConnection :: MVar MinerState -> Socket -> IO NetUser
 handleNewConnection stateRef sock = do
     user <- newNetUser sock
@@ -120,7 +120,7 @@ handleNewConnection stateRef sock = do
     forkIO $ (clientInputHandleLoop stateRef user)
     return user
 
--- | Saves all incoming data in user's buffer and tries to handle requests if user is not in the service mode
+-- | Saves all incoming data in user's buffer and tries to handle requests if user is not in the service mode.
 clientInputHandleLoop :: MVar MinerState -> NetUser -> IO ()
 clientInputHandleLoop stateRef user = do
     chunk <- recv (nuSocket user) 4096
@@ -150,9 +150,8 @@ clientInputHandleLoop stateRef user = do
 
 
 
--- | Incoming request handlers
-
--- | Global handler for all requests
+-- | Incoming request handlers.
+-- | Global handler for all requests.
 handleIncommingMessage :: NetRequestHandler
 handleIncommingMessage stateRef user = do
     let bufferRef = nuBuffer user
@@ -170,7 +169,7 @@ handleIncommingMessage stateRef user = do
                 "Gimme block" -> handleBlockRequest stateRef user
                 _ -> return False
 
--- | Handles "New block" message and validates it
+-- | Handles "New block" message and validates it.
 handleNewBlock :: NetRequestHandler
 handleNewBlock stateRef user = do
     block' <- receive user :: IO (Maybe Block)
@@ -204,8 +203,8 @@ handleNewBlock stateRef user = do
                                 return (state, True)
                 )
 
--- | Helper function for handleNewBlock
--- | Fetches the diverged part of the blockchain from the user
+-- | Helper function for handleNewBlock.
+-- | Fetches the diverged part of the blockchain from the user.
 receiveDivergedPart :: Block -> NetUser -> MinerState -> IO(Maybe [Block])
 receiveDivergedPart newestDivergedBlock user minerState = do
     let prevHash = bPrevHash newestDivergedBlock
@@ -224,7 +223,7 @@ receiveDivergedPart newestDivergedBlock user minerState = do
                     mDivergedRemainder <- receiveDivergedPart receivedBlock user minerState
                     return (fmap (receivedBlock:) mDivergedRemainder)
 
--- | Handles "Gimme last hash" request
+-- | Handles "Gimme last hash" request.
 handleLastHashRequest :: NetRequestHandler
 handleLastHashRequest stateRef user = do
     minerState <- readMVar stateRef
@@ -232,7 +231,7 @@ handleLastHashRequest stateRef user = do
     sendAll (nuSocket user) (encode lastBlockHash)
     return True
 
--- | Handles "Gimme block" request
+-- | Handles "Gimme block" request.
 handleBlockRequest :: NetRequestHandler
 handleBlockRequest stateRef user = do
     requestedHash' <- receive user :: IO (Maybe BlockHash)
@@ -250,9 +249,8 @@ handleBlockRequest stateRef user = do
 
 
 
--- | Functinos for active interaction with network
-
--- | Propagates the newest block in the miner to the network
+-- | Functinos for active interaction with network.
+-- | Propagates the newest block in the miner to the network.
 propagateLastBlockToNet :: Handler
 propagateLastBlockToNet stateRef = do
     forkIO (modifyMVar_ stateRef (\miner -> do
@@ -265,7 +263,7 @@ propagateLastBlockToNet stateRef = do
     return ()
 
 
--- | Sends the specified block to the user
+-- | Sends the specified block to the user.
 sendBlock :: MVar MinerState -> Block -> NetUser -> IO ()
 sendBlock stateRef block user = withService stateRef user $ do
     let sock = nuSocket user
@@ -274,7 +272,7 @@ sendBlock stateRef block user = withService stateRef user $ do
     sendAll sock (encode block)
     putStrLn $ "Sent block to " ++ (show sockName)
 
--- | Fetches the last hash form the user's blockchain
+-- | Fetches the last hash form the user's blockchain.
 requestLastBlockHash :: MVar MinerState -> NetUser -> IO (Maybe BlockHash)
 requestLastBlockHash stateRef user = withService stateRef user $ do
     let sock = nuSocket user
@@ -282,11 +280,8 @@ requestLastBlockHash stateRef user = withService stateRef user $ do
     sendAll sock (encode "Gimme last hash")
     receive user :: IO (Maybe BlockHash)
 
-
-
--- | Internal state management functions
-
--- | Waits until the user is free for servicing and services it
+-- | Internal state management functions.
+-- | Waits until the user is free for servicing and services it.
 withService :: MVar MinerState -> NetUser -> IO a -> IO a
 withService stateRef user i = do
     beginService user
@@ -294,28 +289,27 @@ withService stateRef user i = do
     endService stateRef user
     return ret
 
--- | Waits until the user is free for servicing and starts servicing
+-- | Waits until the user is free for servicing and starts servicing.
 beginService :: NetUser -> IO ()
 beginService user = do
     canService' <- canService user
     unless canService' (beginService user)
 
--- | Stops servicing
+-- | Stops servicing.
 endService :: MVar MinerState -> NetUser -> IO ()
 endService stateRef user = do
         handleIncommingMessage stateRef user
         swapMVar (nuService user) False
         return ()
 
--- | Checks if the user is free for servicing
+-- | Checks if the user is free for servicing.
 canService :: NetUser -> IO Bool
 canService user = modifyMVar (nuService user) (\isBusy -> return (True, not isBusy))
 
 
 
--- | Helper functions
-
--- | Returns the data object from the incoming buffer of the user
+-- | Helper function.
+-- | Returns the data object from the incoming buffer of the user.
 -- todo add timeout
 receive :: Binary a => NetUser -> IO (Maybe a)
 receive user = join $ modifyMVar (nuBuffer user) (\buffer ->

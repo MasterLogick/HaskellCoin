@@ -13,19 +13,19 @@ getTransaction id_sender (Transaction senderHash recvHash amount sign)
  | id_sender == recvHash = [Transaction senderHash recvHash amount sign]
  | otherwise = []
 
--- | Getting transaction of user from transaction list
+-- | Gets transaction of user from transaction list
 getTransactionsBlock :: SenderHash -> TransList -> TransList
 getTransactionsBlock _ [] = []
 getTransactionsBlock id_sender (transition: transList) =
   getTransaction id_sender transition ++ getTransactionsBlock id_sender transList
 
--- | Getting transactions' list of user with usage of blocks' array.
+-- | Gets transactions' list of user with usage of blocks' array.
 getListTransactions :: SenderHash -> [Block] -> TransList
 getListTransactions _ [] = []
 getListTransactions id_sender ((Block prevHash minerHash nonce transCount transList): xs) =
   getTransactionsBlock id_sender transList ++ getListTransactions id_sender xs
 
--- | Get user balance from transaction list
+-- | Gets user balance from transaction list
 getBalanceTransactions :: SenderHash -> TransList -> Amount
 getBalanceTransactions _ [] = 0
 getBalanceTransactions id_sender ((Transaction senderHash recvHash amount _): xs) =
@@ -36,16 +36,18 @@ getBalanceTransactions id_sender ((Transaction senderHash recvHash amount _): xs
       | id_sender == recvHash = amount
       | otherwise = 0
 
-
+-- | Gets amount of mined blocks.
 getAmountMinedBlocks :: SenderHash -> [Block] -> Amount
 getAmountMinedBlocks _ [] = 0
 getAmountMinedBlocks id_sender ((Block prevHash minerHash nonce transCount transList): xs) 
   | minerHash == id_sender = 1 + getAmountMinedBlocks id_sender xs
   | otherwise = getAmountMinedBlocks id_sender xs
 
+-- | Gets user's balance.
 getBalance :: SenderHash -> [Block] -> TransList -> Amount
 getBalance id_sender blocks transList = (getAmountMinedBlocks id_sender blocks) * 10 + (getBalanceTransactions id_sender transList)
 
+-- | Gets transaction list of user.
 prettyTransactions :: SenderHash -> TransList -> String
 prettyTransactions _ [] = ""
 prettyTransactions id_sender ((Transaction senderHash recvHash amount sign) : xs) = 
@@ -56,8 +58,7 @@ prettyTransactions id_sender ((Transaction senderHash recvHash amount sign) : xs
       | id_sender == recvHash = (show recvHash) ++ " <- " ++ (show senderHash) ++ " | " ++ (show amount) ++ "\n"
       | otherwise = ""
 
-
--- | Getting transactions' balance of user.
+-- | Gets transactions' balance of user.
 userBalance :: SenderHash -> Handler
 userBalance id_sender stateRef = do
     miner <- readMVar stateRef

@@ -14,8 +14,8 @@ import NetworkMagic
 import NetworkRules
 import Data.Memory.Encoding.Base16
 
--- | function buildAndSendToNet builds and sends a block into the network
--- | and as a result, the line that the block is built
+-- | Function buildAndSendToNet builds and sends a block into the network
+-- | and as a result, the line that the block is built.
 buildAndSendToNet :: Handler
 buildAndSendToNet stateRef = do
     modifyMVar stateRef (\minerState -> do
