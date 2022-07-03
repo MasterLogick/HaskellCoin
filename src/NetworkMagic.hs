@@ -245,10 +245,10 @@ handleNewBlock stateRef user = do
                                                     putStrLn ("Remote branch selected")
                                                     return (minerState{ blocks = merged, pendingTransactions = transList }, True)
                                                 else do
-                                                    putStrLn ("Local branch selected")
-                                                    return (minerState, True) 
+                                                    putStrLn ("Local branch selected by validation")
+                                                    return (minerState, False)
                                     Right _ -> do
-                                        putStrLn ("Local branch selected")
+                                        putStrLn ("Local branch selected by rules")
                                         return (minerState, True)
                                 propagateLastBlockToNet stateRef
                                 return retVal
@@ -259,8 +259,7 @@ handleNewBlock stateRef user = do
 receiveDivergedPart :: Block -> NetUser -> MinerState -> IO(Maybe [Block])
 receiveDivergedPart newestDivergedBlock user minerState = do
     let prevHash = bPrevHash newestDivergedBlock
-    sendAll (nuSocket user) (encode "Gimme block")
-    mPrevBlock <- receive user :: (IO (Maybe Block))
+    mPrevBlock <- requestBlock user prevHash
     case mPrevBlock of
         Nothing -> return Nothing
         Just receivedBlock -> do
@@ -329,6 +328,15 @@ sendBlock stateRef block user = withService stateRef user $ do
     sendAll sock (encode "New block")
     sendAll sock (encode block)
     putStrLn $ "Sent block to " ++ (show sockName)
+
+requestBlock :: NetUser -> BlockHash -> IO (Maybe Block)
+requestBlock user hash = do
+    sendAll (nuSocket user) (encode "Gimme block")
+    sendAll (nuSocket user) (encode hash)
+    code <- receive user :: IO (Maybe String)
+    case code of
+        Just "Ok" -> receive user :: (IO (Maybe Block))
+        _ -> return Nothing
 
 -- | Propagates the newest pending transaction in the miner to the network.
 propagateLastPendingTransactionToNet :: Handler

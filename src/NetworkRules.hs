@@ -171,9 +171,9 @@ canPreserveLocalChainPart incoming present =
 -- | Selects chain from present chain and incoming full chain of part of incoming chain with some common block(s) in the oldest
 selectChain :: [Block] -> [Block] -> Either [Block] [Block]
 selectChain incoming present = if canPreserveLocalChainPart incomingPart presentDivergedPart then
-        Left (incomingPart ++ commonPart)
-    else
         Right present
+    else
+        Left (incomingPart ++ commonPart)
     where
         (incomingPart, commonSubpart) = break (\x -> elem x present) incoming
         firstCommonBlock = head commonSubpart
