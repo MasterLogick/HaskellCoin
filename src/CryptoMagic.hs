@@ -98,11 +98,11 @@ signMsg priv msg = sign proxy dPriv SHA256 eMsg
         eMsg  = msg
 
 -- | Verifies if string message was signed with matching PrivateKey (Function gets PublicKey).
-verifyStringMsg :: ByteString -> ECDSA.Signature Curve_P521R1 -> Bool
-verifyStringMsg pub sig = verify proxy SHA1 dPub sig eMsg
+verifyStringMsg :: ByteString -> ByteString -> ECDSA.Signature Curve_P521R1 -> Bool
+verifyStringMsg pub msg sig = verify proxy SHA256 dPub sig eMsg
     where
         dPub = throwCryptoError (decodePublic proxy pub)
-        eMsg = C8.pack ""
+        eMsg = msg
 
 -- | Makes the signature hashable.
 instance Binary (ECDSA.Signature Curve_P521R1) where
