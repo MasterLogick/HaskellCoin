@@ -1,5 +1,6 @@
 module TBlock where
 
+import Data.Time.Clock
 import Data.Binary
 import qualified Data.ByteString.Lazy as LB
 
@@ -55,38 +56,65 @@ instance Eq Block where
 
 -- | Data Transaction stores information about sender, recipient, amount of transaction
 -- | and also signature.
-data Transaction = Transaction SenderHash RecvHash Amount HSignature
-    deriving Eq
+data Transaction = Transaction {
+    tSender :: SenderHash,
+    tReceiver :: RecvHash,
+    tAmount :: Amount,
+    tTime :: UTCTime,
+    tSignature :: HSignature
+} deriving Eq
 
 -- | This instance is neccessary for converting transactions into bytes and also bytes into data block.
 instance Binary TransactionCandidate where
-    put (TransactionCandidate sender receiver amount) = do
-        put sender
-        put receiver
-        put amount
+    put transactionCandidate = do
+        put (tcSender transactionCandidate)
+        put (tcReceiver transactionCandidate)
+        put (tcAmount transactionCandidate)
+        put (tcTime transactionCandidate)
+
 
     get = do
         sender <- get :: Get SenderHash
         receiver <- get :: Get RecvHash
         amount <- get :: Get Amount
-        return (TransactionCandidate sender receiver amount)
+        time <- get :: Get UTCTime
+        return (TransactionCandidate{ tcSender = sender, tcReceiver = receiver, tcAmount = amount, tcTime = time })
 
 instance Binary Transaction where
-    put (Transaction sender receiver amount signature) = do
-        put sender
-        put receiver
-        put amount
-        put signature
+    put transcation = do
+        put (tSender transcation)
+        put (tReceiver transcation)
+        put (tAmount transcation)
+        -- put (tTime transcation)
+        put (tSignature transcation)
     
     get = do
         sender <- get :: Get SenderHash
         receiver <- get :: Get RecvHash
-        amount <- get :: Get Amount 
+        amount <- get :: Get Amount
+        time <- get :: Get UTCTime 
         signature <- get :: Get HSignature
-        return (Transaction sender receiver amount signature)
+        return (Transaction{ tSender = sender, tReceiver = receiver, tAmount = amount, tTime = time, tSignature = signature })
+
+instance Binary UTCTime where
+    put time = do
+        put (toRational (utctDayTime time))
+        put (fromEnum (utctDay time))
+
+    get = do
+        dayTime <- get :: Get Rational
+        day <- get :: Get Int
+        return (UTCTime{ utctDay = toEnum day, utctDayTime = fromRational dayTime })
+
 
 -- | Neccessary type aliases.
-data TransactionCandidate = TransactionCandidate SenderHash RecvHash Amount
+data TransactionCandidate = TransactionCandidate {
+    tcSender :: SenderHash,
+    tcReceiver :: RecvHash,
+    tcAmount :: Amount,
+    tcTime :: UTCTime
+}
+
 type SenderHash = BlockHash
 type RecvHash = BlockHash
 type Amount = Double

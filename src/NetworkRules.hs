@@ -25,11 +25,6 @@ checkEnoughCoins minerState senderHash amount
 
 ------------ Anton's block needs approve
 
--- | Verify that all values in a list are 'True'.
-and' :: [Bool] -> Bool
-and' [] = True 
-and' (x: xs) = x && (and' xs)
-
 getValue :: Eq a => a -> [(a, b)] -> Maybe b
 getValue key dict = lookup key dict
 
@@ -105,7 +100,7 @@ validateTransactions (transaction: xs) state =
         newState = validateTransaction transaction state
 
 validateTransaction :: Transaction -> Maybe SystemState -> Maybe SystemState
-validateTransaction transaction@(Transaction senderHash recvHash amount hSignature) state = result
+validateTransaction transaction@(Transaction senderHash recvHash amount _ hSignature) state = result
   where
     result = case state of
       Nothing -> Nothing
@@ -138,7 +133,7 @@ validateBlockNonce block = case show (hashFunc (toStrict $ encode block)) of
 
 -- | Validates transaction signature
 validateTransactionSignature :: Transaction -> Bool
-validateTransactionSignature trans@(Transaction _ _ _ (pubkey, signature)) =
+validateTransactionSignature trans@(Transaction _ _ _ _ (pubkey, signature)) =
     verifyStringMsg pubkey (toStrict $ encode trans) signature
 
 judgeBlock :: MinerState -> Block -> Judgement

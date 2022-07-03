@@ -8,9 +8,9 @@ import TBlock
 
 -- | Checks if id_sender in this transaction
 getTransaction :: SenderHash -> Transaction -> TransList
-getTransaction id_sender (Transaction senderHash recvHash amount sign)
- | id_sender == senderHash = [Transaction senderHash recvHash amount sign]
- | id_sender == recvHash = [Transaction senderHash recvHash amount sign]
+getTransaction id_sender (Transaction senderHash recvHash amount time sign)
+ | id_sender == senderHash = [Transaction senderHash recvHash amount time sign]
+ | id_sender == recvHash = [Transaction senderHash recvHash amount time sign]
  | otherwise = []
 
 -- | Gets transaction of user from transaction list
@@ -28,7 +28,7 @@ getListTransactions id_sender ((Block prevHash minerHash nonce transCount transL
 -- | Gets user balance from transaction list
 getBalanceTransactions :: SenderHash -> TransList -> Amount
 getBalanceTransactions _ [] = 0
-getBalanceTransactions id_sender ((Transaction senderHash recvHash amount _): xs) =
+getBalanceTransactions id_sender ((Transaction senderHash recvHash amount _ _): xs) =
   amount' + getBalanceTransactions id_sender xs
  where
     amount'
@@ -50,7 +50,7 @@ getBalance id_sender blocks transList = (getAmountMinedBlocks id_sender blocks) 
 -- | Gets transaction list of user.
 prettyTransactions :: SenderHash -> TransList -> String
 prettyTransactions _ [] = ""
-prettyTransactions id_sender ((Transaction senderHash recvHash amount sign) : xs) = 
+prettyTransactions id_sender ((Transaction senderHash recvHash amount _ sign) : xs) = 
   result ++ (prettyTransactions id_sender xs)
   where
     result

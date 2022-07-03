@@ -8,7 +8,7 @@ import TBlock
 -- | Gets transactions' description.
 getEnumeratedTransList :: Integer -> [Transaction] -> String
 getEnumeratedTransList _ [] = ""
-getEnumeratedTransList num ((Transaction senderHash recvHash amount _signature): xs) 
+getEnumeratedTransList num ((Transaction senderHash recvHash amount _ _signature): xs) 
     = "~~~~~~~~~~~~~~~\nTransaction number: " ++ show num 
     ++ "\nSender Hash: " ++ show senderHash 
     ++ "\nRecv Hash: "   ++ show recvHash 
@@ -31,8 +31,8 @@ getBlockInfo (Block prevHash minerHash nonce transCount transList)
 -- | Gets information about list of blocks.
 sumBlocksInfo :: [Block] -> String
 sumBlocksInfo [] = "\n"
-sumBlocksInfo (x: xs) 
-    = getBlockInfo x ++ "##################\n" 
+sumBlocksInfo (x: xs)
+    = getBlockInfo x ++ "##################\n"
     ++ sumBlocksInfo xs 
 
 -- | Prints all blocks in console.

@@ -1,7 +1,7 @@
 module Commiter where
 
 import Control.Concurrent.MVar
-import  Data.Binary
+import Data.Binary
 
 import Data.ByteString
 import CryptoMagic
@@ -11,7 +11,7 @@ import NetworkRules
 
 -- | Adds new transaction to pending block.
 commitTransaction :: TransactionCandidate -> Handler
-commitTransaction candidate@(TransactionCandidate sender receiver amount) stateRef = do
+commitTransaction candidate@(TransactionCandidate sender receiver amount time) stateRef = do
     miner <- readMVar stateRef
     let enoughCoins = checkEnoughCoins miner sender amount
     case enoughCoins of
@@ -20,7 +20,7 @@ commitTransaction candidate@(TransactionCandidate sender receiver amount) stateR
                     let public = getKeyFromPair Public $ keyPair miner
                     signature <- signMsg private (toStrict $ encode candidate)
                     putStrLn  "Transaction is added to pending block and signed."
-                    let newTransaction = Transaction sender receiver amount (public, signature)
+                    let newTransaction = Transaction sender receiver amount time (public, signature)
                     return (miner{pendingTransactions = pendingTransactions miner ++ [newTransaction]}, ())
                     )
         False -> 

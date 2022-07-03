@@ -21,6 +21,7 @@ import HelpCommand
 import FilesMagic
 import CryptoHandler
 import Data.ByteString
+import Data.Time.Clock
 
 -- | Types of commands.
 data Command
@@ -64,8 +65,8 @@ handleCommand command = case command of
 
 
 -- | Parses command.
-parseCommand :: String -> Maybe Command
-parseCommand input =
+parseCommand :: UTCTime -> String -> Maybe Command
+parseCommand time input =
     case input of
         "exit" -> Just Exit_
         "build" -> Just BuildAndSend
@@ -85,7 +86,7 @@ parseCommand input =
                                 Just sender ->
                                     case readMaybe id_reciver of
                                         Nothing -> Nothing
-                                        Just reciver -> Just (Commit (TransactionCandidate sender reciver amount))
+                                        Just reciver -> Just (Commit (TransactionCandidate sender reciver amount time))
                 ["connect", ip, port] ->
                     Just (Connect ip port)
                 ["balance", idSender] ->
@@ -137,13 +138,14 @@ run = withSocketsDo $ do
 -- | Processes commands.
 mainLoop
     :: MVar MinerState
-    -> (String -> Maybe Command)
+    -> (UTCTime -> String -> Maybe Command)
     -> (Command -> Handler)
     -> IO ()
 mainLoop stateRef parser handler = do
     byteInput <- prompt "command> "
     let input = C8.unpack byteInput
-    case parser input of
+    time <- getCurrentTime
+    case parser time input of
         Nothing -> do
             putStrLn "ERROR: unrecognized command"
             mainLoop stateRef parser handler
