@@ -9,10 +9,15 @@ import CryptoMagic
 import Control.Exception
 
 import qualified Data.List as DL
--- import Data.List (elemIndex)
 
 data Judgement = Accept | AlreadyPresent | BranchDivergence -- | BadSignature
+data SystemState = SystemState [(SenderHash, Amount)] TransList
 
+-- | block creation fee
+reward :: Amount
+reward = 10
+
+-- | check enough coins
 checkEnoughCoins :: MinerState -> SenderHash -> Amount -> Bool
 checkEnoughCoins minerState senderHash amount
   | userBalance >= amount = True
@@ -23,12 +28,8 @@ checkEnoughCoins minerState senderHash amount
     userTransactions = getListTransactions senderHash minerBlocks
     userBalance = getBalance senderHash minerBlocks (userTransactions ++ pendingTrans)
 
-revard :: Amount
-revard = 10
-
-getValue :: Eq a => a -> [(a, b)] -> Maybe b
-getValue key dict = lookup key dict
-
+-- | function checks the presence of a key in the dictionary, 
+-- | in case of absence, adds a new key value, otherwise updates the value of the existing key
 setValue :: Eq a => a -> b -> [(a, b)] -> [(a, b)]
 setValue key newVal dict = newDict
   where
@@ -41,17 +42,16 @@ setValue key newVal dict = newDict
                     result = prefix ++ ((key, newVal) : suffix)
                 Nothing -> (key, newVal) : dict
 
-type BalanceState = [(SenderHash, Amount)]
-data SystemState = SystemState [(SenderHash, Amount)] TransList
-
--- проверка сигнатур транзакций
--- проверка что транзакция уникальна (ее не было раньше)
--- достаточно ли денег для транзакции [Block] -> Transaction -> bool
+-- | verification of transaction signatures
+-- | check that the transaction is unique (it was not before)
+-- | whether there is enough money for the transaction [Block] -> Transaction -> bool
 validateWholeChain :: [Block] -> TransList -> Bool
 validateWholeChain blocks pendingTrans = result
   where 
     result = validateChain (reverse blocks) [] pendingTrans
 
+-- | checking the blockchain for balance, uniqueness of transactions,
+-- | coherence, signature of transactions
 validateChain :: [Block] -> [(SenderHash, Amount)] -> TransList -> Bool
 validateChain blocks uBalance pendingTrans = case validateBlocks blocks newState of 
     Nothing -> False
@@ -62,6 +62,7 @@ validateChain blocks uBalance pendingTrans = case validateBlocks blocks newState
   where
     newState = Just (SystemState uBalance [])
 
+-- | supporting function for validateChain
 validateBlocks :: [Block] -> Maybe SystemState -> Maybe SystemState
 validateBlocks _ Nothing = Nothing
 validateBlocks [] state = state
@@ -73,10 +74,12 @@ validateBlocks (block: xs) (Just state) = case validateConnection block xs of
     where
       newState = validateBlock block state
 
+-- | supporting function for validateChain
 validateConnection :: Block -> [Block] -> Bool
 validateConnection block1 [] = True
 validateConnection block1 (block2: xs) = if getBlockHash block1 == (bPrevHash block2) then True else False
 
+-- | supporting function for validateChain
 validateBlock :: Block -> SystemState -> Maybe SystemState
 validateBlock block state@(SystemState usersBalance transes) = newState
   where
@@ -86,9 +89,10 @@ validateBlock block state@(SystemState usersBalance transes) = newState
       Just (SystemState usersBalance newTranses) -> Just (SystemState newUsersBalance newTranses)
         where 
           newUsersBalance = case lookup (bMinerHash block) usersBalance of
-            Nothing -> setValue (bMinerHash block) revard usersBalance 
-            Just value -> setValue (bMinerHash block) (revard + value) usersBalance 
-  
+            Nothing -> setValue (bMinerHash block) reward usersBalance 
+            Just value -> setValue (bMinerHash block) (reward + value) usersBalance 
+
+-- | supporting function for validateChain
 validateTransactions :: TransList -> SystemState -> Maybe SystemState
 validateTransactions [] state = Just state
 validateTransactions (transaction: xs) state = 
@@ -96,6 +100,7 @@ validateTransactions (transaction: xs) state =
       Nothing -> Nothing                                               
       Just newState' -> validateTransactions xs newState'
 
+-- | supporting function for validateChain
 validateTransaction :: Transaction -> SystemState -> Maybe SystemState
 validateTransaction transaction@(Transaction senderHash recvHash amount _ hSignature) (SystemState usersBalance transes) = result
   where
@@ -113,6 +118,7 @@ validateTransaction transaction@(Transaction senderHash recvHash amount _ hSigna
                 Just recvUserBalance -> setValue recvHash (amount + recvUserBalance) tmpUsersBalance
               newTranses = transaction : transes
 
+-- | gets a nonсe
 genNonces :: Block -> [Block]
 genNonces (Block prevHash minerId _ trans transList) = blocks
     where
@@ -121,9 +127,11 @@ genNonces (Block prevHash minerId _ trans transList) = blocks
         compueWithNonce nonce =
             Block prevHash minerId nonce trans transList
 
+-- | gets a hash block that fits
 mineBlock :: Block -> IO Block
 mineBlock block = evaluate (head (dropWhile (not . validateBlockNonce) (genNonces block)))
 
+-- | checks whether the block fits the network rules
 validateBlockNonce :: Block -> Bool
 validateBlockNonce block = case show (hashFunc (toStrict $ encode block)) of
     '0':'0':'0':'0':'0':_ -> True
@@ -134,6 +142,7 @@ validateTransactionSignature :: Transaction -> Bool
 validateTransactionSignature trans@(Transaction _ _ _ _ (pubkey, signature)) =
     verifyStringMsg pubkey (toStrict $ encode trans) signature
 
+-- | 
 judgeBlock :: MinerState -> Block -> Judgement
 judgeBlock minerState newBlock =
     if (elem newBlock (blocks minerState)) then
@@ -144,6 +153,7 @@ judgeBlock minerState newBlock =
         else
             BranchDivergence
 
+-- | 
 mergeBranches :: [Block] -> [Block] -> Either [Block] [Block]
 mergeBranches [] presentPart = Right presentPart
 mergeBranches incomingPart [] = Left incomingPart
