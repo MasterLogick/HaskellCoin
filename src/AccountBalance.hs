@@ -50,12 +50,12 @@ getBalance id_sender blocks transList = (getAmountMinedBlocks id_sender blocks) 
 -- | Gets transaction list of user.
 prettyTransactions :: SenderHash -> TransList -> String
 prettyTransactions _ [] = ""
-prettyTransactions id_sender ((Transaction senderHash recvHash amount _ sign) : xs) = 
+prettyTransactions id_sender ((Transaction senderHash recvHash amount time sign) : xs) = 
   result ++ (prettyTransactions id_sender xs)
   where
     result
-      | id_sender == senderHash = (show senderHash) ++ " -> " ++ (show recvHash) ++ " | " ++ (show amount) ++ "\n"
-      | id_sender == recvHash = (show recvHash) ++ " <- " ++ (show senderHash) ++ " | " ++ (show amount) ++ "\n"
+      | id_sender == senderHash = (show senderHash) ++ " -> " ++ (show recvHash) ++ " | " ++ (show amount) ++ " | " ++ (show time) ++ "\n"
+      | id_sender == recvHash = (show recvHash) ++ " <- " ++ (show senderHash) ++ " | " ++ (show amount) ++ " | " ++ (show time) ++ "\n"
       | otherwise = ""
 
 -- | Gets transactions' balance of user.
