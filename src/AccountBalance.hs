@@ -4,7 +4,7 @@ import Control.Concurrent.MVar
 
 import MinerState
 import TBlock
-
+import NetworkRules
 
 -- | Checks if id_sender in this transaction
 getTransaction :: SenderHash -> Transaction -> TransList
@@ -45,7 +45,7 @@ getAmountMinedBlocks id_sender ((Block prevHash minerHash nonce transCount trans
 
 -- | Gets user's balance.
 getBalance :: SenderHash -> [Block] -> TransList -> Amount
-getBalance id_sender blocks transList = (getAmountMinedBlocks id_sender blocks) * 10 + (getBalanceTransactions id_sender transList)
+getBalance id_sender blocks transList = (getAmountMinedBlocks id_sender blocks) * reward + (getBalanceTransactions id_sender transList)
 
 -- | Gets transaction list of user.
 prettyTransactions :: SenderHash -> TransList -> String
