@@ -4,7 +4,10 @@ import Control.Concurrent.MVar
 
 import MinerState
 import TBlock
-import NetworkRules
+
+-- | block creation fee
+reward :: Amount
+reward = 10
 
 -- | Checks if id_sender in this transaction
 getTransaction :: SenderHash -> Transaction -> TransList

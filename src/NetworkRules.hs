@@ -13,10 +13,6 @@ import qualified Data.List as DL
 data SystemState = SystemState [(SenderHash, Amount)] TransList
   deriving (Show)
 
--- | block creation fee
-reward :: Amount
-reward = 10
-
 -- | check enough coins
 checkEnoughCoins :: MinerState -> SenderHash -> Amount -> Bool
 checkEnoughCoins minerState senderHash amount
