@@ -62,7 +62,7 @@ data Transaction = Transaction {
     tAmount :: Amount,
     tTime :: UTCTime,
     tSignature :: HSignature
-} deriving Eq
+} deriving (Eq, Show)
 
 -- | This instance is neccessary for converting transactions into bytes and also bytes into data block.
 instance Binary TransactionCandidate where

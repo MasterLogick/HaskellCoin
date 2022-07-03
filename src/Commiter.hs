@@ -14,17 +14,22 @@ import NetworkMagic
 commitTransaction :: TransactionCandidate -> Handler
 commitTransaction candidate@(TransactionCandidate sender receiver amount time) stateRef = do
     miner <- readMVar stateRef
-    let enoughCoins = checkEnoughCoins miner sender amount
-    case enoughCoins of
-        True -> do
-            modifyMVar stateRef (\miner -> do
-                    let private = getKeyFromPair Private $ keyPair miner
-                    let public = getKeyFromPair Public $ keyPair miner
-                    signature <- signMsg private (toStrict $ encode candidate)
-                    let newTransaction = Transaction sender receiver amount time (public, signature)
-                    propagateLastPendingTransactionToNet stateRef
-                    return (miner{pendingTransactions = pendingTransactions miner ++ [newTransaction]}, ())
-                    )
-            putStrLn  "Transaction is added to pending block and signed."
-        False -> 
-                putStrLn  "Not enough coins to make this transaction."
+    if amount <= 0 
+        then
+            putStrLn "Print invalid amount."
+    else
+      do
+        let enoughCoins = checkEnoughCoins miner sender amount
+        case enoughCoins of
+            True -> do
+                modifyMVar stateRef (\miner -> do
+                        let private = getKeyFromPair Private $ keyPair miner
+                        let public = getKeyFromPair Public $ keyPair miner
+                        signature <- signMsg private (toStrict $ encode candidate)
+                        let newTransaction = Transaction sender receiver amount time (public, signature)
+                        propagateLastPendingTransactionToNet stateRef
+                        return (miner{pendingTransactions = pendingTransactions miner ++ [newTransaction]}, ())
+                        )
+                putStrLn  "Transaction is added to pending block and signed."
+            False -> 
+                    putStrLn  "Not enough coins to make this transaction."

@@ -12,6 +12,7 @@ import qualified Data.List as DL
 
 data Judgement = Accept | AlreadyPresent | BranchDivergence -- | BadSignature
 data SystemState = SystemState [(SenderHash, Amount)] TransList
+  deriving (Show)
 
 -- | block creation fee
 reward :: Amount
@@ -139,8 +140,10 @@ validateBlockNonce block = case show (hashFunc (toStrict $ encode block)) of
 
 -- | Validates transaction signature
 validateTransactionSignature :: Transaction -> Bool
-validateTransactionSignature trans@(Transaction _ _ _ _ (pubkey, signature)) =
+validateTransactionSignature (Transaction sender receiver amount time (pubkey, signature)) =
     verifyStringMsg pubkey (toStrict $ encode trans) signature
+    where
+      trans = TransactionCandidate sender receiver amount time
 
 -- | 
 judgeBlock :: MinerState -> Block -> Judgement
