@@ -44,6 +44,7 @@ handleExit_ :: Handler
 handleExit_ stateRef = do
     modifyMVar stateRef (\miner -> 
         return (miner{shouldExit = True},())) 
+    startParseWrite stateRef
     putStrLn "Bye!"
 
 -- | Handles command.
@@ -135,7 +136,6 @@ run = withSocketsDo $ do
     startParseBackup initMinerState'
     startParseListen initMinerState'
     startParseConnect initMinerState'
-    startParseWrite initMinerState'
     putStrLn "Welcome to Haskell coin blockchain!"
     mainLoop initMinerState' parseCommand handleCommand
 
