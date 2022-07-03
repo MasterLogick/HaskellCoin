@@ -1,7 +1,7 @@
 module NetworkRules where
 
 import Data.Binary
-import Data.ByteString hiding (head, dropWhile, elem, map, null, break, length, reverse)
+import Data.ByteString hiding (head, dropWhile, elem, map, null, break, length, reverse, all)
 import MinerState
 import TBlock
 import AccountBalance
@@ -53,12 +53,14 @@ validateWholeChain blocks pendingTrans = result
 -- | checking the blockchain for balance, uniqueness of transactions,
 -- | coherence, signature of transactions
 validateChain :: [Block] -> [(SenderHash, Amount)] -> TransList -> Bool
-validateChain blocks uBalance pendingTrans = case validateBlocks blocks newState of 
-    Nothing -> False
-    Just state@(SystemState usersBalance transes) -> 
-      case validateTransactions pendingTrans state of
-        Nothing -> False
-        Just _ -> True
+validateChain blocks uBalance pendingTrans = case validateNonces blocks of
+  False -> False
+  True -> case validateBlocks blocks newState of 
+      Nothing -> False
+      Just state@(SystemState usersBalance transes) -> 
+        case validateTransactions pendingTrans state of
+          Nothing -> False
+          Just _ -> True
   where
     newState = Just (SystemState uBalance [])
 
@@ -73,6 +75,9 @@ validateBlocks (block: xs) (Just state) = case validateConnection block xs of
       Just _ -> validateBlocks xs newState
     where
       newState = validateBlock block state
+
+validateNonces :: [Block] -> Bool
+validateNonces blocks = all validateBlockNonce blocks
 
 -- | supporting function for validateChain
 validateConnection :: Block -> [Block] -> Bool
