@@ -174,7 +174,6 @@ handleIncommingMessage :: NetRequestHandler
 handleIncommingMessage stateRef user = do
     let bufferRef = nuBuffer user
     buffer <- takeMVar bufferRef
-    putStrLn (show buffer)
     let request :: Either (LB.ByteString, ByteOffset, String) (LB.ByteString, ByteOffset, String); request = decodeOrFail buffer
     case request of
         Left (_, _, err) -> do
