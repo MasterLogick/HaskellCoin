@@ -54,8 +54,8 @@ prettyTransactions id_sender ((Transaction senderHash recvHash amount time sign)
   result ++ (prettyTransactions id_sender xs)
   where
     result
-      | id_sender == senderHash = (show senderHash) ++ " -> " ++ (show recvHash) ++ " | " ++ (show amount) ++ " | " ++ (show time) ++ "\n"
-      | id_sender == recvHash = (show recvHash) ++ " <- " ++ (show senderHash) ++ " | " ++ (show amount) ++ " | " ++ (show time) ++ "\n"
+      | id_sender == senderHash = (show senderHash) ++ " -> " ++ (show recvHash) ++ " | " ++ (show time) ++ " | " ++ (show amount)  ++ "\n"
+      | id_sender == recvHash = (show recvHash) ++ " <- " ++ (show senderHash)++ " | " ++ (show time) ++ " | " ++ (show amount) ++ "\n"
       | otherwise = ""
 
 -- | Gets transactions' balance of user.
@@ -64,7 +64,7 @@ userBalance id_sender stateRef = do
     miner <- readMVar stateRef
     let pendingTrans = pendingTransactions miner
     let transactions = (getListTransactions id_sender (blocks miner)) ++ (getTransactionsBlock id_sender pendingTrans)
-    putStrLn("From:                                       To:                                        Amount:")
+    putStrLn("From:                                       To:                                        Date:                            Amount:")
     putStrLn (prettyTransactions id_sender transactions)
     putStrLn ("Balance: " ++ (show $ getBalance id_sender (blocks miner) transactions))
     return ()
