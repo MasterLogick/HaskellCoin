@@ -6,6 +6,7 @@ import MinerState
 import qualified Control.Exception as CE 
 import qualified Data.ByteString.Char8 as C8
 import qualified Data.ByteString.Base64.URL as DBU
+import qualified Data.ByteString as DBS
 import Data.ByteString
 import System.IO
 import Data.Complex (imagPart)
@@ -22,6 +23,12 @@ prompt text = do
     System.IO.putStr text
     hFlush stdout
     Data.ByteString.getLine
+
+validateUserInput :: ByteString -> String
+validateUserInput input =
+  case C8.unpack $ DBS.take 1 $ DBS.reverse input of
+    "\r" -> C8.unpack $ DBS.reverse $ DBS.drop 1 $ DBS.reverse input
+    _ -> C8.unpack input
 
 checkUserResponse :: String -> ResponceJudgement
 checkUserResponse response = 
@@ -42,8 +49,7 @@ startParseCommand :: MVar MinerState -> IO()
 startParseCommand minerState = do
     putStrLn "Do you want to generate new private key? YES/no"
     byteInput <- prompt "answer> "
-    let input = C8.unpack byteInput
-    print byteInput
+    let input = validateUserInput byteInput
     case checkUserResponse input of
         Accepted -> accept
         Reject -> reject
@@ -55,8 +61,13 @@ startParseCommand minerState = do
         accept = genPair minerState
         reject = do
             privateKey <- prompt "Enter your private key: "
-            publicKey <- CE.evaluate $ generatePublic (DBU.decodeLenient privateKey)
-            modifyMVar_ minerState (\miner -> return miner{keyPair = (DBU.decodeLenient privateKey, publicKey)})
+            publicKey <- CE.evaluate $ generatePublic (DBU.decodeLenient $ validated privateKey)
+            modifyMVar_ minerState (\miner -> return miner{keyPair = (DBU.decodeLenient $ validated privateKey, publicKey), hashId = hashFunc publicKey})
+            where
+              validated key = 
+                case C8.unpack $ DBS.take 1 $ DBS.reverse key of
+                  "\r" -> DBS.reverse $ DBS.drop 1 $ DBS.reverse key
+                  _ -> key
 
 
 -- | Starts parsing command for uploading backup of chain from file.
@@ -64,7 +75,7 @@ startParseBackup :: MVar MinerState -> IO()
 startParseBackup stateRef = do
     putStrLn "Do you want to load backup of chain from file? yes/NO"
     byteInput <- prompt "answer> "
-    let input = C8.unpack byteInput
+    let input = validateUserInput byteInput
     case checkUserResponse input of
         Accepted -> accept
         Reject -> reject
@@ -75,7 +86,7 @@ startParseBackup stateRef = do
     where 
         accept = do
             path <- prompt "Enter your path: "
-            let userPath = C8.unpack path
+            let userPath = validateUserInput path
             loadBlocks userPath stateRef
         reject = return ()
 
@@ -84,7 +95,7 @@ startParseConnect :: MVar MinerState -> IO()
 startParseConnect stateRef = do
     putStrLn "Do you want to connect to the network? yes/NO"
     byteInput <- prompt "answer> "
-    let input = C8.unpack byteInput
+    let input = validateUserInput byteInput
     case checkUserResponse input of
         Accepted -> accept
         Reject -> reject
@@ -96,8 +107,8 @@ startParseConnect stateRef = do
         accept = do
             ip <- prompt "Enter your remote ip: "
             port <- prompt "Enter your remote port: "
-            let userIp = C8.unpack ip
-            let userPort = C8.unpack port
+            let userIp = validateUserInput ip
+            let userPort = validateUserInput port
             connectAndSync userIp userPort stateRef
         reject = return ()
 
@@ -106,7 +117,7 @@ startParseListen :: MVar MinerState -> IO()
 startParseListen stateRef = do
     putStrLn "Do you want to start listening? yes/NO"
     byteInput <- prompt "answer> "
-    let input = C8.unpack byteInput
+    let input = validateUserInput byteInput
     case checkUserResponse input of
         Accepted -> accept
         Reject -> reject
@@ -118,8 +129,8 @@ startParseListen stateRef = do
         accept = do
             ip <- prompt "Enter your ip: "
             port <- prompt "Enter your port: "
-            let userIp = C8.unpack ip
-            let userPort = C8.unpack port
+            let userIp = validateUserInput ip
+            let userPort = validateUserInput port
             setupServer userIp userPort stateRef
         reject = return ()
 
@@ -128,7 +139,7 @@ startParseWrite :: MVar MinerState -> IO()
 startParseWrite stateRef = do
     putStrLn "Do you want to write backup of chain into file? YES/no"
     byteInput <- prompt "answer> "
-    let input = C8.unpack byteInput
+    let input = validateUserInput byteInput
     case checkUserResponse input of
         Accepted -> accept
         Reject -> reject
@@ -139,6 +150,6 @@ startParseWrite stateRef = do
     where 
         accept = do
             path <- prompt "Enter your path: "
-            let userPath = C8.unpack path
+            let userPath = validateUserInput path
             writeBlocks userPath stateRef
         reject = return ()

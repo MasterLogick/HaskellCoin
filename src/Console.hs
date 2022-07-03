@@ -147,7 +147,7 @@ mainLoop
     -> IO ()
 mainLoop stateRef parser handler = do
     byteInput <- prompt "command> "
-    let input = C8.unpack byteInput
+    let input = validateUserInput byteInput
     time <- getCurrentTime
     case parser time input of
         Nothing -> do
