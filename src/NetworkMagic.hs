@@ -201,7 +201,7 @@ handleNewPendingTranscation stateRef user = do
             peerName <- getPeerName (nuSocket user)
             if elem trans pendingTrans then
                 return (minerState, True)
-            else if validateWholeChain chain (trans:pendingTrans) then do
+            else if validateWholeChain chain (pendingTrans ++ [trans]) then do
                 putStrLn ("Accepted new pending transaction from " ++ (show peerName))
                 propagateLastPendingTransactionToNet stateRef
                 return (minerState{ pendingTransactions = pendingTrans ++ [trans] }, True)
