@@ -85,7 +85,7 @@ instance Binary Transaction where
         put (tSender transcation)
         put (tReceiver transcation)
         put (tAmount transcation)
-        -- put (tTime transcation)
+        put (tTime transcation)
         put (tSignature transcation)
     
     get = do

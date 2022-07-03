@@ -51,6 +51,23 @@ Request block by hash:
 3) Profit!!!
 
 
+Request pending transactions:
+1) Client Sends:
+    "Gimme pend trans" :: String
+
+2) Server sends:
+    transList :: [Transaction]
+
+3) Profit!!!
+
+
+Send new transaction:
+1) Server sends:
+    "New pend trans" :: String
+    transaction :: Transcation
+
+2) Profit!!!
+
 Send new block:
 1) Server sends:
     "New block" :: String
@@ -151,11 +168,13 @@ clientInputHandleLoop stateRef user = do
 
 
 -- | Incoming request handlers.
+
 -- | Global handler for all requests.
 handleIncommingMessage :: NetRequestHandler
 handleIncommingMessage stateRef user = do
     let bufferRef = nuBuffer user
     buffer <- takeMVar bufferRef
+    putStrLn (show buffer)
     let request :: Either (LB.ByteString, ByteOffset, String) (LB.ByteString, ByteOffset, String); request = decodeOrFail buffer
     case request of
         Left (_, _, err) -> do
@@ -165,11 +184,34 @@ handleIncommingMessage stateRef user = do
             putMVar bufferRef remainder
             case tag of
                 "New block" -> handleNewBlock stateRef user
+                "New pend trans" -> handleNewPendingTranscation stateRef user
                 "Gimme last hash" -> handleLastHashRequest stateRef user
                 "Gimme block" -> handleBlockRequest stateRef user
+                "Gimme pend trans" -> handlePendingTransactionsRequest stateRef user
                 _ -> return False
 
+-- | Handles "New pend trans" message and validates it.
+handleNewPendingTranscation :: NetRequestHandler
+handleNewPendingTranscation stateRef user = do
+    trans' <- receive user :: IO (Maybe Transaction)
+    case trans' of
+        Nothing -> return False
+        Just trans -> modifyMVar stateRef (\minerState -> do
+            let chain = blocks minerState
+            let pendingTrans = pendingTransactions minerState
+            peerName <- getPeerName (nuSocket user)
+            if elem trans pendingTrans then
+                return (minerState, True)
+            else if validateWholeChain chain (trans:pendingTrans) then do
+                putStrLn ("Accepted new pending transaction from " ++ (show peerName))
+                return (minerState{ pendingTransactions = trans:pendingTrans }, True)
+            else do
+                putStrLn ("Declined new pending transaction from " ++ (show peerName))
+                return (minerState, False)
+                )
+
 -- | Handles "New block" message and validates it.
+-- todo remove built transactions from pending list
 handleNewBlock :: NetRequestHandler
 handleNewBlock stateRef user = do
     block' <- receive user :: IO (Maybe Block)
@@ -247,9 +289,17 @@ handleBlockRequest stateRef user = do
                     sendAll (nuSocket user) (encode requestedBlock)
             return True
 
+-- | Handles "Gimme pend trans" request.
+handlePendingTransactionsRequest :: NetRequestHandler
+handlePendingTransactionsRequest stateRef user = do
+    minerState <- readMVar stateRef
+    sendAll (nuSocket user) (encode (pendingTransactions minerState))
+    return True
 
 
--- | Functinos for active interaction with network.
+
+-- | Functions for active interaction with network.
+
 -- | Propagates the newest block in the miner to the network.
 propagateLastBlockToNet :: Handler
 propagateLastBlockToNet stateRef = do
@@ -262,7 +312,6 @@ propagateLastBlockToNet stateRef = do
         ))
     return ()
 
-
 -- | Sends the specified block to the user.
 sendBlock :: MVar MinerState -> Block -> NetUser -> IO ()
 sendBlock stateRef block user = withService stateRef user $ do
@@ -271,6 +320,30 @@ sendBlock stateRef block user = withService stateRef user $ do
     sendAll sock (encode "New block")
     sendAll sock (encode block)
     putStrLn $ "Sent block to " ++ (show sockName)
+
+-- | Propagates the newest pending transaction in the miner to the network.
+propagateLastPendingTransactionToNet :: Handler
+propagateLastPendingTransactionToNet stateRef = do
+    forkIO (do
+        minerState <- readMVar stateRef
+        let net = network minerState
+        let mTrans = listToMaybe (pendingTransactions minerState)
+        case mTrans of
+            Nothing -> return ()
+            Just trans -> do
+                foldMap (sendTrans stateRef trans) net
+                putStrLn $ "Sent pending transaction to " ++ (show $ length $ net) ++ " users"
+        )
+    return ()
+
+-- | Sends the specified block to the user.
+sendTrans :: MVar MinerState -> Transaction -> NetUser -> IO ()
+sendTrans stateRef trans user = withService stateRef user $ do
+    let sock = nuSocket user
+    sockName <- getPeerName sock
+    sendAll sock (encode "New pend trans")
+    sendAll sock (encode trans)
+    putStrLn $ "Sent pending transaction to " ++ (show sockName)
 
 -- | Fetches the last hash form the user's blockchain.
 requestLastBlockHash :: MVar MinerState -> NetUser -> IO (Maybe BlockHash)
