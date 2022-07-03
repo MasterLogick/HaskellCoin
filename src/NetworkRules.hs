@@ -137,8 +137,8 @@ validateBlockNonce block = case show (hashFunc (toStrict $ encode block)) of
     _ -> False
 
 -- | Validates transaction signature
-validateTransaction :: Transaction -> Bool
-validateTransaction trans@(Transaction _ _ _ (pubkey, signature)) =
+validateTransactionSignature :: Transaction -> Bool
+validateTransactionSignature trans@(Transaction _ _ _ (pubkey, signature)) =
     verifyStringMsg pubkey (toStrict $ encode trans) signature
 
 judgeBlock :: MinerState -> Block -> Judgement
