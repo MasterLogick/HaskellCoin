@@ -204,7 +204,8 @@ handleNewPendingTranscation stateRef user = do
                 return (minerState, True)
             else if validateWholeChain chain (trans:pendingTrans) then do
                 putStrLn ("Accepted new pending transaction from " ++ (show peerName))
-                return (minerState{ pendingTransactions = trans:pendingTrans }, True)
+                propagateLastPendingTransactionToNet stateRef
+                return (minerState{ pendingTransactions = pendingTrans ++ [trans] }, True)
             else do
                 putStrLn ("Declined new pending transaction from " ++ (show peerName))
                 return (minerState, False)
@@ -327,7 +328,7 @@ propagateLastPendingTransactionToNet stateRef = do
     forkIO (do
         minerState <- readMVar stateRef
         let net = network minerState
-        let mTrans = listToMaybe (pendingTransactions minerState)
+        let mTrans = listToMaybe (reverse (pendingTransactions minerState))
         case mTrans of
             Nothing -> return ()
             Just trans -> do
