@@ -136,14 +136,11 @@ validateBlockNonce block = case show (hashFunc (toStrict $ encode block)) of
     '0':'0':'0':'0':'0':_ -> True
     _ -> False
 
-<<<<<<< HEAD
-=======
 -- | Validates transaction signature
 validateTransaction :: Transaction -> Bool
 validateTransaction trans@(Transaction _ _ _ (pubkey, signature)) =
     verifyStringMsg pubkey (toStrict $ encode trans) signature
 
->>>>>>> cb92d923c5fb53380e89adf20d329f23e7205f3e
 judgeBlock :: MinerState -> Block -> Judgement
 judgeBlock minerState newBlock =
     if (elem newBlock (blocks minerState)) then
