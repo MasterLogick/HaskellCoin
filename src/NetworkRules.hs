@@ -54,7 +54,7 @@ data SystemState = SystemState [(SenderHash, Amount)] TransList
 validateWholeChain :: [Block] -> TransList -> Bool
 validateWholeChain blocks pendingTrans = result
   where 
-    result = validateChain blocks [] []
+    result = validateChain (reverse blocks) [] []
 
 validateChain :: [Block] -> [(SenderHash, Amount)] -> TransList -> Bool
 validateChain blocks uBalance pendingTrans = case validateBlocks blocks newState of 
