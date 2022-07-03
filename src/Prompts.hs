@@ -34,6 +34,7 @@ checkUserResponse :: String -> ResponceJudgement
 checkUserResponse response = 
     case response of
         "Yes" -> Accepted
+        "YES" -> Accepted
         "yes" -> Accepted
         "y"   -> Accepted
         "Y"   -> Accepted

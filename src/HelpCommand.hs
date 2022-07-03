@@ -8,7 +8,7 @@ printHelp _ = do
     putStrLn "exit                                              - exit from program"
     putStrLn "build                                             - build new block"
     putStrLn "show                                              - print chain of blocks"
-    putStrLn "commit [senderId] [recieverId] [amountMoney]  - create transaction"
+    putStrLn "commit [recieverId] [amountMoney]                 - create transaction"
     putStrLn "connect [ip] [port]                               - connect to server at specified ip and port"
     putStrLn "balance [userHash]                                - print user's balance"
     putStrLn "id                                                - print user's id"

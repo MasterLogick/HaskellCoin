@@ -66,8 +66,8 @@ handleCommand command = case command of
 
 
 -- | Parses command.
-parseCommand :: UTCTime -> String -> Maybe Command
-parseCommand time input =
+parseCommand :: SenderHash -> UTCTime -> String -> Maybe Command
+parseCommand sender time input =
     case input of
         "exit" -> Just Exit_
         "build" -> Just BuildAndSend
@@ -78,16 +78,13 @@ parseCommand time input =
         "help" -> Just Help
         _ ->
             case words input of
-                ["commit", id_sender, id_reciver, amt] -> 
+                ["commit", id_reciver, amt] -> 
                     case readMaybe amt of
                         Nothing -> Nothing
                         Just amount -> 
-                            case readMaybe id_sender of
-                                Nothing -> Nothing
-                                Just sender ->
-                                    case readMaybe id_reciver of
-                                        Nothing -> Nothing
-                                        Just reciver -> Just (Commit (TransactionCandidate sender reciver amount time))
+                                case readMaybe id_reciver of
+                                    Nothing -> Nothing
+                                    Just reciver -> Just (Commit (TransactionCandidate sender reciver amount time))
                 ["connect", ip, port] ->
                     Just (Connect ip port)
                 ["balance", idSender] ->
@@ -142,14 +139,16 @@ run = withSocketsDo $ do
 -- | Processes commands.
 mainLoop
     :: MVar MinerState
-    -> (UTCTime -> String -> Maybe Command)
+    -> (SenderHash -> UTCTime -> String -> Maybe Command)
     -> (Command -> Handler)
     -> IO ()
 mainLoop stateRef parser handler = do
     byteInput <- prompt "command> "
     let input = validateUserInput byteInput
     time <- getCurrentTime
-    case parser time input of
+    minerState <- readMVar stateRef
+    let sender = hashId minerState
+    case parser sender time input of
         Nothing -> do
             putStrLn "ERROR: unrecognized command"
             mainLoop stateRef parser handler
