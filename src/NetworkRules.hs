@@ -23,7 +23,8 @@ checkEnoughCoins minerState senderHash amount
     userTransactions = getListTransactions senderHash minerBlocks
     userBalance = getBalance senderHash minerBlocks (userTransactions ++ pendingTrans)
 
------------- Anton's block needs approve
+revard :: Amount
+revard = 10
 
 getValue :: Eq a => a -> [(a, b)] -> Maybe b
 getValue key dict = lookup key dict
@@ -49,12 +50,12 @@ data SystemState = SystemState [(SenderHash, Amount)] TransList
 validateWholeChain :: [Block] -> TransList -> Bool
 validateWholeChain blocks pendingTrans = result
   where 
-    result = validateChain (reverse blocks) [] []
+    result = validateChain (reverse blocks) [] pendingTrans
 
 validateChain :: [Block] -> [(SenderHash, Amount)] -> TransList -> Bool
 validateChain blocks uBalance pendingTrans = case validateBlocks blocks newState of 
     Nothing -> False
-    state@(Just (SystemState usersBalance transes)) -> 
+    Just state@(SystemState usersBalance transes) -> 
       case validateTransactions pendingTrans state of
         Nothing -> False
         Just _ -> True
@@ -64,56 +65,53 @@ validateChain blocks uBalance pendingTrans = case validateBlocks blocks newState
 validateBlocks :: [Block] -> Maybe SystemState -> Maybe SystemState
 validateBlocks _ Nothing = Nothing
 validateBlocks [] state = state
-validateBlocks (block: xs) state = case state of 
-  Nothing -> Nothing
-  Just state@(SystemState usersBalance transes) -> case newState of
-                                                      Nothing -> Nothing
-                                                      Just _ -> validateBlocks xs newState
+validateBlocks (block: xs) (Just state) = case validateConnection block xs of
+  False -> Nothing
+  True -> case newState of
+      Nothing -> Nothing
+      Just _ -> validateBlocks xs newState
     where
-      newState = validateBlock block (Just state)
+      newState = validateBlock block state
 
-validateBlock :: Block -> Maybe SystemState -> Maybe SystemState
-validateBlock block state = result
+validateConnection :: Block -> [Block] -> Bool
+validateConnection block1 [] = True
+validateConnection block1 (block2: xs) = if getBlockHash block1 == (bPrevHash block2) then True else False
+
+validateBlock :: Block -> SystemState -> Maybe SystemState
+validateBlock block state@(SystemState usersBalance transes) = newState
   where
-    result = case state of
+    tmpState = validateTransactions (bTransList block) state
+    newState = case tmpState of
       Nothing -> Nothing
-      Just state@(SystemState usersBalance transes) -> newState
+      Just (SystemState usersBalance newTranses) -> Just (SystemState newUsersBalance newTranses)
         where 
-          tmpState = validateTransactions (bTransList block) (Just state)
-          newState = case tmpState of
-            Nothing -> Nothing
-            Just (SystemState usersBalance newTranses) -> Just (SystemState newUsersBalance newTranses)
-              where 
-                newUsersBalance = case lookup (bMinerHash block) usersBalance of
-                  Nothing -> setValue (bMinerHash block) 10 usersBalance 
-                  Just value -> setValue (bMinerHash block) (10 + value) usersBalance 
+          newUsersBalance = case lookup (bMinerHash block) usersBalance of
+            Nothing -> setValue (bMinerHash block) revard usersBalance 
+            Just value -> setValue (bMinerHash block) (revard + value) usersBalance 
   
-validateTransactions :: TransList -> Maybe SystemState -> Maybe SystemState
-validateTransactions [] state = state
+validateTransactions :: TransList -> SystemState -> Maybe SystemState
+validateTransactions [] state = Just state
 validateTransactions (transaction: xs) state = 
-  case state of
-    Nothing -> Nothing
-    state@ (Just (SystemState usersBalance transes)) -> case newState of 
-                                                        Nothing -> Nothing                                               
-                                                        Just _ -> validateTransactions xs newState
-      where                                                   
-        newState = validateTransaction transaction state
+  case validateTransaction transaction state of
+      Nothing -> Nothing                                               
+      Just newState' -> validateTransactions xs newState'
 
-validateTransaction :: Transaction -> Maybe SystemState -> Maybe SystemState
-validateTransaction transaction@(Transaction senderHash recvHash amount _ hSignature) state = result
+validateTransaction :: Transaction -> SystemState -> Maybe SystemState
+validateTransaction transaction@(Transaction senderHash recvHash amount _ hSignature) (SystemState usersBalance transes) = result
   where
-    result = case state of
-      Nothing -> Nothing
-      Just (SystemState usersBalance transes) -> case DL.find (\x -> x == transaction) transes of -- check is transaction in list of transactions
-                    Just _ -> Nothing
-                    Nothing -> case lookup senderHash usersBalance of
-                      Nothing -> Nothing
-                      Just userBalance -> if userBalance < amount then Nothing else (Just (SystemState newUsersBalance newTranses))
-                        where
-                          newUsersBalance = setValue senderHash (userBalance - amount) usersBalance
-                          newTranses = transaction : transes
-
------------------------- end block that need approve
+    result = case validateTransactionSignature transaction of
+      False -> Nothing
+      True -> case DL.find (\x -> x == transaction) transes of -- check is transaction in list of transactions
+        Just _ -> Nothing
+        Nothing -> case lookup senderHash usersBalance of
+          Nothing -> Nothing
+          Just senderUserBalance -> if senderUserBalance < amount then Nothing else (Just (SystemState newUsersBalance newTranses))
+            where
+              tmpUsersBalance = setValue senderHash (senderUserBalance - amount) usersBalance -- change balance of sender
+              newUsersBalance = case lookup recvHash tmpUsersBalance of -- change balance of recv
+                Nothing -> setValue recvHash amount tmpUsersBalance
+                Just recvUserBalance -> setValue recvHash (amount + recvUserBalance) tmpUsersBalance
+              newTranses = transaction : transes
 
 genNonces :: Block -> [Block]
 genNonces (Block prevHash minerId _ trans transList) = blocks
