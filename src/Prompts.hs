@@ -54,8 +54,7 @@ startParseCommand minerState = do
     where 
         accept = genPair minerState
         reject = do
-            putStrLn "Enter your private key:"
-            privateKey <- prompt "Private key> "
+            privateKey <- prompt "Enter your private key: "
             publicKey <- CE.evaluate $ generatePublic (DBU.decodeLenient privateKey)
             modifyMVar_ minerState (\miner -> return miner{keyPair = (DBU.decodeLenient privateKey, publicKey)})
 
@@ -75,7 +74,7 @@ startParseBackup stateRef = do
             startParseBackup stateRef
     where 
         accept = do
-            path <- prompt "Enter your path:"
+            path <- prompt "Enter your path: "
             let userPath = C8.unpack path
             loadBlocks userPath stateRef
         reject = return ()
@@ -95,8 +94,8 @@ startParseConnect stateRef = do
             startParseConnect stateRef
     where 
         accept = do
-            ip <- prompt "Enter your remote ip:"
-            port <- prompt "Enter your remote port:"
+            ip <- prompt "Enter your remote ip: "
+            port <- prompt "Enter your remote port: "
             let userIp = C8.unpack ip
             let userPort = C8.unpack port
             connectAndSync userIp userPort stateRef
@@ -117,8 +116,8 @@ startParseListen stateRef = do
             startParseListen stateRef
     where 
         accept = do
-            ip <- prompt "Enter your ip:"
-            port <- prompt "Enter your port:"
+            ip <- prompt "Enter your ip: "
+            port <- prompt "Enter your port: "
             let userIp = C8.unpack ip
             let userPort = C8.unpack port
             setupServer userIp userPort stateRef
@@ -139,7 +138,7 @@ startParseWrite stateRef = do
             startParseBackup stateRef
     where 
         accept = do
-            path <- prompt "Enter your path:"
+            path <- prompt "Enter your path: "
             let userPath = C8.unpack path
             writeBlocks userPath stateRef
         reject = return ()
