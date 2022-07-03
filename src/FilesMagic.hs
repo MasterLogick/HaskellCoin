@@ -22,7 +22,7 @@ loadBlocks filePath stateRef = do
         Left _ -> putStrLn "Something wrong!"
         Right (_, _, blocksData) -> modifyMVar_ stateRef (\minerState -> do
             let present = blocks minerState
-            case mergeBranches blocksData present of
+            case selectChain blocksData present of
                 Left merged -> do
                     putStrLn "Got new blocks from file"
                     propagateLastBlockToNet stateRef

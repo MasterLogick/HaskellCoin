@@ -9,6 +9,7 @@ import Data.Maybe
 import Network.Socket
 import Network.Socket.ByteString.Lazy (recv, sendAll)
 import qualified Data.ByteString.Lazy as LB
+import Data.Time.Clock
 
 import MinerState
 import TBlock
@@ -211,7 +212,6 @@ handleNewPendingTranscation stateRef user = do
                 )
 
 -- | Handles "New block" message and validates it.
--- todo remove built transactions from pending list
 handleNewBlock :: NetRequestHandler
 handleNewBlock stateRef user = do
     block' <- receive user :: IO (Maybe Block)
@@ -219,30 +219,39 @@ handleNewBlock stateRef user = do
         Nothing -> return False
         Just block -> do
             modifyMVar stateRef (\minerState -> do
-                let acceptance = judgeBlock minerState block
+                let acceptance = preliminaryJudgeBlock minerState block
                 peerName <- getPeerName (nuSocket user)
                 case acceptance of
                     Accept -> do
                         putStrLn ("Accepted new block " ++ (show (getBlockHash block)) ++ " from " ++ (show peerName))
                         propagateLastBlockToNet stateRef
-                        return (minerState{ blocks = (block:(blocks minerState)) }, True)
+                        let newTranses = filter (\x -> not (elem x (bTransList block))) (pendingTransactions minerState)
+                        return (minerState{ blocks = (block:(blocks minerState)), pendingTransactions = newTranses }, True)
                     AlreadyPresent -> do
                         return (minerState, True)
                     BranchDivergence -> do
+                        putStrLn ("Branch divergence " ++ (show peerName) ++ " with user detected")
                         divergedPart' <- receiveDivergedPart block user minerState
                         case divergedPart' of
                             Nothing -> return (minerState, False)
                             Just divergence' -> do
-                                let divergence = block:divergence'
-                                state <- case mergeBranches divergence (blocks minerState) of
+                                retVal <- case selectChain divergence' (blocks minerState) of
                                     Left merged -> do
+                                        transList' <- requestTransList user
+                                        case transList' of
+                                            Nothing -> return (minerState, False)
+                                            Just transList -> do
+                                                if validateWholeChain merged transList then do
+                                                    putStrLn ("Remote branch selected")
+                                                    return (minerState{ blocks = merged, pendingTransactions = transList }, True)
+                                                else do
+                                                    putStrLn ("Local branch selected")
+                                                    return (minerState, True) 
+                                    Right _ -> do
                                         putStrLn ("Local branch selected")
-                                        return minerState{ blocks = merged }   
-                                    Right merged -> do
-                                        putStrLn ("Remote branch selected")
-                                        return minerState{ blocks = merged }
+                                        return (minerState, True)
                                 propagateLastBlockToNet stateRef
-                                return (state, True)
+                                return retVal
                 )
 
 -- | Helper function for handleNewBlock.
@@ -255,7 +264,7 @@ receiveDivergedPart newestDivergedBlock user minerState = do
     case mPrevBlock of
         Nothing -> return Nothing
         Just receivedBlock -> do
-            let acceptance = judgeBlock minerState receivedBlock
+            let acceptance = preliminaryJudgeBlock minerState receivedBlock
             case acceptance of
                 Accept -> do
                     return (Just [receivedBlock, (getNewestBlock minerState)])
@@ -348,10 +357,13 @@ sendTrans stateRef trans user = withService stateRef user $ do
 -- | Fetches the last hash form the user's blockchain.
 requestLastBlockHash :: MVar MinerState -> NetUser -> IO (Maybe BlockHash)
 requestLastBlockHash stateRef user = withService stateRef user $ do
-    let sock = nuSocket user
-    sockName <- getPeerName sock
-    sendAll sock (encode "Gimme last hash")
+    sendAll (nuSocket user) (encode "Gimme last hash")
     receive user :: IO (Maybe BlockHash)
+
+requestTransList :: NetUser -> IO (Maybe [Transaction])
+requestTransList user = do
+    sendAll (nuSocket user) (encode "Gimme pend trans")
+    receive user :: IO (Maybe [Transaction])
 
 -- | Internal state management functions.
 -- | Waits until the user is free for servicing and services it.
@@ -385,8 +397,18 @@ canService user = modifyMVar (nuService user) (\isBusy -> return (True, not isBu
 -- | Returns the data object from the incoming buffer of the user.
 -- todo add timeout
 receive :: Binary a => NetUser -> IO (Maybe a)
-receive user = join $ modifyMVar (nuBuffer user) (\buffer ->
-        case decodeOrFail buffer of
-            Left _ -> return (buffer, receive user)
-            Right (remainder, _, parsedVal) -> return (remainder, return (Just parsedVal))
-        )
+receive user = do
+    time <- getCurrentTime
+    let timeEnd = addUTCTime (3 :: NominalDiffTime) time
+    receive' timeEnd
+    where
+        receive' et = do
+            time <- getCurrentTime
+            if (fromEnum (diffUTCTime et time)) < 0 then
+                return Nothing
+            else
+                join $ modifyMVar (nuBuffer user) (\buffer ->
+                    case decodeOrFail buffer of
+                        Left _ -> return (buffer, receive' et)
+                        Right (remainder, _, parsedVal) -> return (remainder, return (Just parsedVal))
+                    )

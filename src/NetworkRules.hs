@@ -10,7 +10,6 @@ import Control.Exception
 
 import qualified Data.List as DL
 
-data Judgement = Accept | AlreadyPresent | BranchDivergence -- | BadSignature
 data SystemState = SystemState [(SenderHash, Amount)] TransList
   deriving (Show)
 
@@ -145,9 +144,11 @@ validateTransactionSignature (Transaction sender receiver amount time (pubkey, s
     where
       trans = TransactionCandidate sender receiver amount time
 
--- | 
-judgeBlock :: MinerState -> Block -> Judgement
-judgeBlock minerState newBlock =
+data PreliminaryJudgement = Accept | AlreadyPresent | BranchDivergence
+
+-- | Makes a preliminary judgement about new block
+preliminaryJudgeBlock :: MinerState -> Block -> PreliminaryJudgement
+preliminaryJudgeBlock minerState newBlock =
     if (elem newBlock (blocks minerState)) then
         AlreadyPresent
     else
@@ -156,26 +157,23 @@ judgeBlock minerState newBlock =
         else
             BranchDivergence
 
--- | 
-mergeBranches :: [Block] -> [Block] -> Either [Block] [Block]
-mergeBranches [] presentPart = Right presentPart
-mergeBranches incomingPart [] = Left incomingPart
-mergeBranches incoming present =
-    if not (null incomingPart) then
-        mergeUnsafe 
+-- | Tells if present chain part should be preserved instead of rebasing to incoming part
+canPreserveLocalChainPart :: [Block] -> [Block] -> Bool
+canPreserveLocalChainPart [] present = True
+canPreserveLocalChainPart incoming [] = False
+canPreserveLocalChainPart incoming present =
+    if (length incoming) > (length present) then False
+    else if (length incoming) < (length present) then True
+    else if (getBlockHash (head incoming)) < (getBlockHash (head present)) then False
+    else True
+
+-- | Selects chain from present chain and incoming full chain of part of incoming chain with some common block(s) in the oldest
+selectChain :: [Block] -> [Block] -> Either [Block] [Block]
+selectChain incoming present = if canPreserveLocalChainPart incomingPart presentDivergedPart then
+        Left (incomingPart ++ commonPart)
     else
         Right present
     where
-        (incomingPart,_) = break (\x -> elem x present) incoming
-        mergeUnsafe :: Either [Block] [Block]
-        mergeUnsafe =
-            if (length localDivergedPart) > (length incomingPart) then
-                Right present
-            else if (length localDivergedPart) < (length incomingPart) then
-                 Left (incomingPart ++ commonPart)
-            else if (getBlockHash (head incomingPart)) < (getBlockHash (head localDivergedPart)) then
-                Left (incomingPart ++ commonPart)
-            else (Right present)
-            where
-                lastCommonBlockHash = bPrevHash (head (reverse incomingPart))
-                (localDivergedPart, commonPart) = break (\x -> (getBlockHash x) == lastCommonBlockHash) present
+        (incomingPart, commonSubpart) = break (\x -> elem x present) incoming
+        firstCommonBlock = head commonSubpart
+        (presentDivergedPart, commonPart) = break (== firstCommonBlock) present
