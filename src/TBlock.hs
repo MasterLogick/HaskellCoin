@@ -56,6 +56,7 @@ instance Eq Block where
 -- | Data Transaction stores information about sender, recipient, amount of transaction
 -- | and also signature.
 data Transaction = Transaction SenderHash RecvHash Amount HSignature
+    deriving Eq
 
 -- | This instance is neccessary for converting transactions into bytes and also bytes into data block.
 instance Binary TransactionCandidate where
