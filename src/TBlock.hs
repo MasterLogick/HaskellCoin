@@ -21,7 +21,7 @@ genesisBlock :: Block
 genesisBlock = Block {
     bPrevHash = fallbackHash,
     bMinerHash = hashFunc $ getKeyFromPair Public fallbackPair,
-    bNonce = 0,
+    bNonce = 1696027,
     bTransCount = 0,
     bTransList = []
 }
