@@ -1,5 +1,5 @@
-{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, UndecidableInstances #-}
 module CryptoMagic where
 
 import Data.Proxy
@@ -15,7 +15,8 @@ import qualified Data.ByteString.Lazy as B
 import Crypto.ECC
     ( Curve_P521R1,
       EllipticCurve(curveGenerateKeyPair),
-      KeyPair(keypairGetPublic, keypairGetPrivate) )
+      KeyPair(keypairGetPublic, keypairGetPrivate),
+      Point(..) )
 import Crypto.Hash
 import Crypto.Error
 import Crypto.Random.Types
@@ -99,10 +100,14 @@ signMsg priv msg = sign proxy dPriv SHA256 eMsg
 
 -- | Verifies if string message was signed with matching PrivateKey (Function gets PublicKey).
 verifyStringMsg :: ByteString -> ByteString -> ECDSA.Signature Curve_P521R1 -> Bool
-verifyStringMsg pub msg sig = verify proxy SHA256 dPub sig eMsg
+verifyStringMsg pub msg sig = unfail failablePoint
     where
-        dPub = throwCryptoError (decodePublic proxy pub)
+        failablePoint = decodePoint proxy pub
         eMsg = msg
+
+        unfail :: CryptoFailable (Point Curve_P521R1) -> Bool
+        unfail (CryptoPassed point) = verify proxy SHA256 point sig eMsg
+        unfail (CryptoFailed error_) = False
 
 -- | Makes the signature hashable.
 instance Binary (ECDSA.Signature Curve_P521R1) where
