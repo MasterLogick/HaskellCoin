@@ -2,7 +2,7 @@
 
 Yet another blockchain but written in Haskell this time.
 
-![2022-06-29 15 52 34](https://user-images.githubusercontent.com/87667725/176442084-0439de5f-89ab-4b16-b3ac-e69c48b6ffb9.jpg)
+![image](https://user-images.githubusercontent.com/57675148/177044713-0f6aecd5-7988-40b5-8e93-f77ceef7726e.png)
 
 Print `help` to get the list of commands.
 In alpha version you can commit transaction from any address to any address without limitations on amount. Just enter `commit` with user hashes and amount and enter `build` to create new block in the network.
@@ -14,7 +14,7 @@ Then, get your `id` by entering:
 ```
 command> id
 ```
-![tg_image_7448217](https://user-images.githubusercontent.com/30959736/176492679-dc281054-65e5-4664-8eb8-00eaafd8c2cf.jpeg)
+![image](https://user-images.githubusercontent.com/57675148/177043437-f8752832-340b-421b-bb3c-5113cf6dabf9.png)
 
 If you have saved the private key from your previous session, and at least one machine was up all time you were offline or you saved the blockchain by entering
 ```
@@ -68,7 +68,7 @@ To get any user's balance:
 ```
 command> balance ID 
 ```
-![tg_image_1487400450](https://user-images.githubusercontent.com/30959736/176493774-b8a16bbd-03db-4bd3-9601-d091c394eba0.jpeg)
+![image](https://user-images.githubusercontent.com/57675148/177043655-292c881e-e140-4962-9d7d-09c95901a2b8.png)
 
 At any point, if you get lost, run
 ```
