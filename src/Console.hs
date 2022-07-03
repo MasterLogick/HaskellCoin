@@ -132,6 +132,10 @@ run = withSocketsDo $ do
         })
     printGreeting
     startParseCommand initMinerState'
+    startParseBackup initMinerState'
+    startParseListen initMinerState'
+    startParseConnect initMinerState'
+    startParseWrite initMinerState'
     putStrLn "Welcome to Haskell coin blockchain!"
     mainLoop initMinerState' parseCommand handleCommand
 
