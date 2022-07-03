@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.5.
+-- This file has been generated from package.yaml by hpack version 0.34.6.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3ef9a20feb1a1298bdf06fd3d0be824dc714b565c0b3410130f66bf8b07f68cd
+-- hash: 028237fcd0a336a6c8dea16fd82efccecc79e489eb08876a8f72b2c246f00600
 
 name:           HaskellCoin
 version:        0.0.1.0
@@ -37,20 +37,22 @@ library
       MinerState
       NetworkMagic
       NetworkRules
+      Prompts
       Sender
       TBlock
-      Prompts
   other-modules:
       Paths_HaskellCoin
   hs-source-dirs:
       src
   build-depends:
-      base >=4.7 && <5
+      QuickCheck
+    , base >=4.7 && <5
     , base64-bytestring >=1.2.1.0
     , basement ==0.0.12
     , binary >=0.8.8.0
     , bytestring ==0.11.3.1
     , cryptonite >=0.29
+    , hspec
     , memory >=0.17.0
     , network >=3.1.2.7
     , text >=1.2.4.0
@@ -66,12 +68,38 @@ executable HaskellCoin-exe
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       HaskellCoin
+    , QuickCheck
     , base >=4.7 && <5
     , base64-bytestring >=1.2.1.0
     , basement ==0.0.12
     , binary >=0.8.8.0
     , bytestring ==0.11.3.1
     , cryptonite >=0.29
+    , hspec
+    , memory >=0.17.0
+    , network >=3.1.2.7
+    , text >=1.2.4.0
+    , time >=1.9.3
+  default-language: Haskell2010
+
+test-suite Spec-exe
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_HaskellCoin
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      HaskellCoin
+    , QuickCheck
+    , base >=4.7 && <5
+    , base64-bytestring >=1.2.1.0
+    , basement ==0.0.12
+    , binary >=0.8.8.0
+    , bytestring ==0.11.3.1
+    , cryptonite >=0.29
+    , hspec
     , memory >=0.17.0
     , network >=3.1.2.7
     , text >=1.2.4.0

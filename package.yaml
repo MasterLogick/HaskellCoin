@@ -28,6 +28,8 @@ dependencies:
 - memory >= 0.17.0
 - base64-bytestring >= 1.2.1.0
 - time >= 1.9.3
+- hspec
+- QuickCheck
 library:
   source-dirs: src
 
@@ -35,6 +37,17 @@ executables:
   HaskellCoin-exe:
     main:                Main.hs
     source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - HaskellCoin
+
+tests:
+  Spec-exe:
+    main:               Spec.hs
+    source-dirs:        test
     ghc-options:
     - -threaded
     - -rtsopts
