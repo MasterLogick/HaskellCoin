@@ -125,7 +125,7 @@ run = withSocketsDo $ do
         pendingTransactions =  [],
         network = [],
         keyPair = fallbackPair,
-        hashId = hashFunc $ fst fallbackPair,
+        hashId = hashFunc $ snd fallbackPair,
         shouldExit = False
         })
     printGreeting
