@@ -35,12 +35,12 @@ command> connect FRIEND's_IP PORT
 ```
 Then, to commit transaction, enter:
 ```
-command> commit YOUR_ID RECEIVER1_ID COIN_ANOUNT
-command> commit YOUR_ID RECEIVER2_ID COIN_ANOUNT
+command> commit RECEIVER1_ID COIN_ANOUNT
+command> commit RECEIVER2_ID COIN_ANOUNT
 ...
-command> commit YOUR_ID RECEIVERN_ID COIN_ANOUNT
+command> commit RECEIVERN_ID COIN_ANOUNT
 ```
-![tg_image_1155102309](https://user-images.githubusercontent.com/30959736/176492458-4d4b0e35-6287-45c5-987e-1f38439e69cb.jpeg)
+![image](https://user-images.githubusercontent.com/57675148/177119311-b0679be3-9502-49e9-a1f1-665dfa674bf3.png)
 
 Then, again build the block:
 ```
