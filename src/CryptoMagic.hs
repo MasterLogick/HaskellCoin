@@ -47,12 +47,6 @@ hashFunc = hash
 fallbackHash :: BlockHash
 fallbackHash = hashFunc $ DBS.toStrict $ encode (0 :: Int)
 
--- | This is a special hash that starts with 00 byte. In real blockchain systems this parameter is different, 
--- so it makes the problem of searching for nonce much harder. For the sake of testing & simplicity we decided
--- to make this particular problem easy.
-ruleHash :: BlockHash
-ruleHash = hashFunc $ DBS.toStrict $ encode (783 ::Int)
-
 -- | Fallback keypair to use in case of some extraordinary situations.
 fallbackPair :: Pair
 fallbackPair = (DBU.decodeLenient $ C8.pack "BADoaSa2fzVfzsDUjbwiADEGZPVvy0SB6RUSm95qeY5fClNXHzUyhUojTvhJOfhY3_JBt2ujIjg0WBt-DEPOB2pIwgCoTpW2qcCqS2pd6P5PvgAFHiWL_5KFEOt3pNZTmUspvK3Sl1FQ1866xodvn2bfLacr-9xGnCONzBzEi5i9Ajqg1w==",
