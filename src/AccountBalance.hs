@@ -1,3 +1,8 @@
+{-# OPTIONS_GHC -Wall -fno-warn-type-defaults #-}
+{-# OPTIONS_GHC -fdefer-typed-holes -fshow-hole-constraints -funclutter-valid-hole-fits #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Redundant bracket" #-}
 module AccountBalance where
 
 import Control.Concurrent.MVar
@@ -42,7 +47,7 @@ getBalanceTransactions id_sender ((Transaction senderHash recvHash amount _ _): 
 -- | Gets amount of mined blocks.
 getAmountMinedBlocks :: SenderHash -> [Block] -> Amount
 getAmountMinedBlocks _ [] = 0
-getAmountMinedBlocks id_sender ((Block prevHash minerHash nonce transCount transList): xs) 
+getAmountMinedBlocks id_sender ((Block prevHash minerHash nonce transCount transList): xs)
   | minerHash == id_sender = 1 + getAmountMinedBlocks id_sender xs
   | otherwise = getAmountMinedBlocks id_sender xs
 

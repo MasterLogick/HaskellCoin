@@ -1,3 +1,8 @@
+{-# OPTIONS_GHC -Wall -fno-warn-type-defaults #-}
+{-# OPTIONS_GHC -fdefer-typed-holes -fshow-hole-constraints -funclutter-valid-hole-fits #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Redundant bracket" #-}
 module NetworkMagic where
 
 import Control.Concurrent
@@ -250,7 +255,7 @@ resolveBranchDivergence :: NetUser -> MVar MinerState -> IO ()
 resolveBranchDivergence user stateRef = do
     forkIO $ withService stateRef user $ do
         shouldStop <- modifyMVar stateRef (\minerState -> do
-            sendAll (nuSocket user) (encode "Gimme last hash")
+            sendAll (nuSocket user) (encode ("Gimme last hash" :: String))
             mHash <- receive user :: IO (Maybe BlockHash)
             case mHash of
                 Nothing -> return (minerState, False)
@@ -323,9 +328,9 @@ handleBlockRequest stateRef user = do
             minerState <- readMVar stateRef
             let requestedBlock' = getBlockByHash minerState requestedHash 
             case requestedBlock' of
-                Nothing -> sendAll (nuSocket user) (encode "Fail")
+                Nothing -> sendAll (nuSocket user) (encode ("Fail" :: String))
                 Just requestedBlock -> do
-                    sendAll (nuSocket user) (encode "Ok")
+                    sendAll (nuSocket user) (encode ("Ok" :: String))
                     sendAll (nuSocket user) (encode requestedBlock)
             return True
 
@@ -356,14 +361,14 @@ propagateLastBlockToNet stateRef = do
 sendBlock :: MVar MinerState -> Block -> NetUser -> IO ()
 sendBlock stateRef block user = withService stateRef user $ do
     let sock = nuSocket user
-    sendAll sock (encode "New block")
+    sendAll sock (encode ("New block" :: String))
     sendAll sock (encode block)
     peerName <- safeGetPeerName (nuSocket user)
     putStrLn ("Sent block to " ++ peerName)
 
 requestBlock :: NetUser -> BlockHash -> IO (Maybe Block)
 requestBlock user hash = do
-    sendAll (nuSocket user) (encode "Gimme block")
+    sendAll (nuSocket user) (encode ("Gimme block" :: String))
     sendAll (nuSocket user) (encode hash)
     code <- receive user :: IO (Maybe String)
     case code of
@@ -389,7 +394,7 @@ propagateLastPendingTransactionToNet stateRef = do
 sendTrans :: MVar MinerState -> Transaction -> NetUser -> IO ()
 sendTrans stateRef trans user = withService stateRef user $ do
     let sock = nuSocket user
-    sendAll sock (encode "New pend trans")
+    sendAll sock (encode ("New pend trans" :: String))
     sendAll sock (encode trans)
     peerName <- safeGetPeerName (nuSocket user)
     putStrLn ("Sent pending transaction to " ++ peerName)
@@ -397,13 +402,17 @@ sendTrans stateRef trans user = withService stateRef user $ do
 -- | Fetches the last hash form the user's blockchain.
 requestLastBlockHash :: MVar MinerState -> NetUser -> IO (Maybe BlockHash)
 requestLastBlockHash stateRef user = withService stateRef user $ do
-    sendAll (nuSocket user) (encode "Gimme last hash")
+    sendAll (nuSocket user) (encode ("Gimme last hash" :: String))
     receive user :: IO (Maybe BlockHash)
 
 requestTransList :: NetUser -> IO (Maybe [Transaction])
 requestTransList user = do
-    sendAll (nuSocket user) (encode "Gimme pend trans")
+    sendAll (nuSocket user) (encode ("Gimme pend trans" :: String))
     receive user :: IO (Maybe [Transaction])
+
+-- check block in read from file
+-- remove incoming tras if it is in chain
+
 
 -- | Internal state management functions.
 -- | Waits until the user is free for servicing and services it.
