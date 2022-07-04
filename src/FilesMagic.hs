@@ -24,9 +24,13 @@ loadBlocks filePath stateRef = do
             let present = blocks minerState
             case selectChain blocksData present of
                 Left merged -> do
-                    putStrLn "Got new blocks from file"
-                    propagateLastBlockToNet stateRef
-                    return minerState{ blocks = merged }
+                    if validateWholeChain merged [] then do
+                        putStrLn "Got new blocks from file"
+                        propagateLastBlockToNet stateRef
+                        return minerState{ blocks = merged, pendingTransactions = [] }
+                    else do
+                        putStrLn "Chain backup is mailformed"
+                        return minerState
                 Right merged -> do
                     putStrLn "Local chain is better"
                     return minerState{ blocks = merged }
