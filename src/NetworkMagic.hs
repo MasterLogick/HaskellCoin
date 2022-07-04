@@ -10,6 +10,8 @@ import Network.Socket
 import Network.Socket.ByteString.Lazy (recv, sendAll)
 import qualified Data.ByteString.Lazy as LB
 import Data.Time.Clock
+import Control.Exception hiding (Handler) 
+import Data.Typeable
 
 import MinerState
 import TBlock
@@ -123,12 +125,16 @@ connectAndSync ip port stateRef = do
     connect sock $ addrAddress addr
     putStrLn $ "Connection to " ++ (show $ addrAddress $ addr) ++ " established"
     user <- handleNewConnection stateRef sock
-    peerName <- getPeerName sock
     mHash <- requestLastBlockHash stateRef user
     case mHash of
         Nothing -> gracefulClose sock 3000
         Just blockHash -> do
-            putStrLn $ "Recieved last block hash " ++ (show blockHash) ++ " from " ++ (show peerName)
+            minerState <- readMVar stateRef
+            if blockHash /= (getBlockHash (getNewestBlock minerState)) then
+                resolveBranchDivergence user stateRef
+            else
+                return ()
+
 
 -- | Records new connection in miner state and forks with client request handler.
 handleNewConnection :: MVar MinerState -> Socket -> IO NetUser
@@ -141,11 +147,11 @@ handleNewConnection stateRef sock = do
 -- | Saves all incoming data in user's buffer and tries to handle requests if user is not in the service mode.
 clientInputHandleLoop :: MVar MinerState -> NetUser -> IO ()
 clientInputHandleLoop stateRef user = do
-    chunk <- recv (nuSocket user) 4096
-    shouldStop <- modifyMVar (nuBuffer user) (\buffer -> do
+    eChunc <- try $ recv (nuSocket user) 4096 :: IO (Either SomeException LB.ByteString)
+    shouldStop <- case eChunc of
+        Left _ -> return True
+        Right chunk -> modifyMVar (nuBuffer user) (\buffer -> do
             if (LB.null chunk) then do
-                peerName <- getPeerName $ nuSocket $ user
-                putStrLn $ "Connection to " ++ (show $ peerName) ++ " lost"
                 modifyMVar_ stateRef (\minerState -> 
                     return minerState{ network = 
                         filter (\x -> (nuSocket user) /= (nuSocket x)) (network minerState)
@@ -155,8 +161,11 @@ clientInputHandleLoop stateRef user = do
             else do
                 let newBuffer = LB.append buffer chunk
                 return (newBuffer, False)
-        )
-    unless shouldStop $ do
+             )
+    if shouldStop then do
+        peerName <- safeGetPeerName (nuSocket user)
+        putStrLn ("Connection to " ++ peerName ++ " lost")
+    else do
         canService' <- canService user
         when canService' $ do
             forkIO $ do
@@ -199,15 +208,16 @@ handleNewPendingTranscation stateRef user = do
         Just trans -> modifyMVar stateRef (\minerState -> do
             let chain = blocks minerState
             let pendingTrans = pendingTransactions minerState
-            peerName <- getPeerName (nuSocket user)
             if elem trans pendingTrans then
                 return (minerState, True)
             else if validateWholeChain chain (pendingTrans ++ [trans]) then do
-                putStrLn ("Accepted new pending transaction from " ++ (show peerName))
+                peerName <- safeGetPeerName (nuSocket user)
+                putStrLn ("Accepted new pending transaction from " ++ peerName)
                 propagateLastPendingTransactionToNet stateRef
                 return (minerState{ pendingTransactions = pendingTrans ++ [trans] }, True)
             else do
-                putStrLn ("Declined new pending transaction from " ++ (show peerName))
+                peerName <- safeGetPeerName (nuSocket user)
+                putStrLn ("Declined new pending transaction from " ++ peerName)
                 return (minerState, False)
                 )
 
@@ -220,39 +230,61 @@ handleNewBlock stateRef user = do
         Just block -> do
             modifyMVar stateRef (\minerState -> do
                 let acceptance = preliminaryJudgeBlock minerState block
-                peerName <- getPeerName (nuSocket user)
                 case acceptance of
                     Accept -> do
-                        putStrLn ("Accepted new block " ++ (show (getBlockHash block)) ++ " from " ++ (show peerName))
+                        peerName <- safeGetPeerName (nuSocket user)
+                        putStrLn ("Accepted new block " ++ (show (getBlockHash block)) ++ " from " ++ peerName)
                         propagateLastBlockToNet stateRef
                         let newTranses = filter (\x -> not (elem x (bTransList block))) (pendingTransactions minerState)
                         return (minerState{ blocks = (block:(blocks minerState)), pendingTransactions = newTranses }, True)
                     AlreadyPresent -> do
                         return (minerState, True)
                     BranchDivergence -> do
-                        putStrLn ("Branch divergence " ++ (show peerName) ++ " with user detected")
-                        divergedPart' <- receiveDivergedPart block user minerState
-                        case divergedPart' of
-                            Nothing -> return (minerState, False)
-                            Just divergence' -> do
-                                retVal <- case selectChain divergence' (blocks minerState) of
-                                    Left merged -> do
-                                        transList' <- requestTransList user
-                                        case transList' of
-                                            Nothing -> return (minerState, False)
-                                            Just transList -> do
-                                                if validateWholeChain merged transList then do
-                                                    putStrLn ("Remote branch selected")
-                                                    return (minerState{ blocks = merged, pendingTransactions = transList }, True)
-                                                else do
-                                                    putStrLn ("Local branch selected by validation")
-                                                    return (minerState, False)
-                                    Right _ -> do
-                                        putStrLn ("Local branch selected by rules")
-                                        return (minerState, True)
-                                propagateLastBlockToNet stateRef
-                                return retVal
+                        peerName <- safeGetPeerName (nuSocket user)
+                        putStrLn ("Branch divergence " ++ peerName ++ " with user detected")
+                        resolveBranchDivergence user stateRef
+                        return (minerState, True)
                 )
+
+resolveBranchDivergence :: NetUser -> MVar MinerState -> IO ()
+resolveBranchDivergence user stateRef = do
+    forkIO $ withService stateRef user $ do
+        shouldStop <- modifyMVar stateRef (\minerState -> do
+            sendAll (nuSocket user) (encode "Gimme last hash")
+            mHash <- receive user :: IO (Maybe BlockHash)
+            case mHash of
+                Nothing -> return (minerState, False)
+                Just hash -> do
+                    mBlock <- requestBlock user hash
+                    case mBlock of
+                        Nothing -> return (minerState, False)
+                        Just block -> do
+                            mDivergedPart <- receiveDivergedPart block user minerState
+                            case mDivergedPart of
+                                Nothing -> return (minerState, False)
+                                Just divergence' -> do
+                                    let divergence = block:divergence'
+                                    retVal <- case selectChain divergence (blocks minerState) of
+                                        Left merged -> do
+                                            transList' <- requestTransList user
+                                            case transList' of
+                                                Nothing -> return (minerState, False)
+                                                Just transList -> do
+                                                    if validateWholeChain merged transList then do
+                                                        putStrLn ("Remote branch selected")
+                                                        return (minerState{ blocks = merged, pendingTransactions = transList }, True)
+                                                    else do
+                                                        putStrLn ("Local branch selected by validation")
+                                                        return (minerState, False)
+                                        Right _ -> do
+                                            putStrLn ("Local branch selected by rules")
+                                            return (minerState, True)
+                                    propagateLastBlockToNet stateRef
+                                    return retVal
+            )
+        unless shouldStop (gracefulClose (nuSocket user) 3000)
+        return ()
+    return ()
 
 -- | Helper function for handleNewBlock.
 -- | Fetches the diverged part of the blockchain from the user.
@@ -324,10 +356,10 @@ propagateLastBlockToNet stateRef = do
 sendBlock :: MVar MinerState -> Block -> NetUser -> IO ()
 sendBlock stateRef block user = withService stateRef user $ do
     let sock = nuSocket user
-    sockName <- getPeerName sock
     sendAll sock (encode "New block")
     sendAll sock (encode block)
-    putStrLn $ "Sent block to " ++ (show sockName)
+    peerName <- safeGetPeerName (nuSocket user)
+    putStrLn ("Sent block to " ++ peerName)
 
 requestBlock :: NetUser -> BlockHash -> IO (Maybe Block)
 requestBlock user hash = do
@@ -357,10 +389,10 @@ propagateLastPendingTransactionToNet stateRef = do
 sendTrans :: MVar MinerState -> Transaction -> NetUser -> IO ()
 sendTrans stateRef trans user = withService stateRef user $ do
     let sock = nuSocket user
-    sockName <- getPeerName sock
     sendAll sock (encode "New pend trans")
     sendAll sock (encode trans)
-    putStrLn $ "Sent pending transaction to " ++ (show sockName)
+    peerName <- safeGetPeerName (nuSocket user)
+    putStrLn ("Sent pending transaction to " ++ peerName)
 
 -- | Fetches the last hash form the user's blockchain.
 requestLastBlockHash :: MVar MinerState -> NetUser -> IO (Maybe BlockHash)
@@ -420,3 +452,10 @@ receive user = do
                         Left _ -> return (buffer, receive' et)
                         Right (remainder, _, parsedVal) -> return (remainder, return (Just parsedVal))
                     )
+
+safeGetPeerName :: Socket -> IO String
+safeGetPeerName sock = do
+    mPeerName <- try (getPeerName sock) :: IO (Either SomeException SockAddr)
+    case mPeerName of
+        Left e -> return "unknown"
+        Right pname -> return (show pname)
