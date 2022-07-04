@@ -14,7 +14,6 @@ import qualified Data.ByteString.Base64.URL as DBU
 import qualified Data.ByteString as DBS
 import Data.ByteString
 import System.IO
-import Data.Complex (imagPart)
 import CryptoHandler
 import CryptoMagic
 import FilesMagic

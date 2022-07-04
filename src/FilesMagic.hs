@@ -4,18 +4,15 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Redundant bracket" #-}
 module FilesMagic where 
-    
-import Control.Concurrent.MVar
 
+import Data.Binary
+import Control.Concurrent.MVar
+import qualified Data.ByteString.Lazy as LB
+    
 import MinerState
-import TBlock
 import NetworkRules
 import NetworkMagic
 
-import Data.Binary
-import qualified Data.ByteString.Lazy as LB
-
-import Control.Concurrent.MVar
 
 type Path = String
 

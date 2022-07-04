@@ -5,10 +5,11 @@
 {-# HLINT ignore "Redundant bracket" #-}
 module MinerState where
 
+import qualified Data.ByteString.Lazy as LB
 import Control.Concurrent.MVar
 import Network.Socket
 import Data.Maybe
-import qualified Data.ByteString.Lazy as LB
+import Data.List
 
 import TBlock
 import CryptoMagic
@@ -50,6 +51,6 @@ getNewestBlock minerState = fromMaybe fallbackBlock (listToMaybe (blocks minerSt
 
 -- | Gets block by hash.
 getBlockByHash :: MinerState -> BlockHash -> Maybe Block
-getBlockByHash minerState hash = listToMaybe (filter filterRule (blocks minerState))
+getBlockByHash minerState hash = find filterRule (blocks minerState)
     where
         filterRule block = (getBlockHash block) == hash

@@ -13,7 +13,7 @@ import TBlock
 -- | Gets transactions' description.
 getEnumeratedTransList :: Integer -> [Transaction] -> String
 getEnumeratedTransList _ [] = ""
-getEnumeratedTransList num ((Transaction senderHash recvHash amount time _signature): xs) 
+getEnumeratedTransList num ((Transaction senderHash recvHash amount time _): xs) 
     = "~~~~~~~~~~~~~~~\nTransaction number: " ++ show num 
     ++ "\nSender Hash: " ++ show senderHash 
     ++ "\nRecv Hash: "   ++ show recvHash 
@@ -23,7 +23,7 @@ getEnumeratedTransList num ((Transaction senderHash recvHash amount time _signat
 
 -- | Gets a list of transactions.
 getTransList :: [Transaction] -> String
-getTransList transList = getEnumeratedTransList 1 transList
+getTransList = getEnumeratedTransList 1
 
 -- | Gets information about block.
 getBlockInfo :: Block -> String

@@ -7,6 +7,7 @@ module CryptoHandler where
 
 import Control.Concurrent.MVar
 import qualified Data.ByteString.Base64.URL as DBU
+
 import CryptoMagic
 import MinerState
 
@@ -38,8 +39,7 @@ printPair stateRef = do
 getId :: Handler
 getId stateRef = do
     modifyMVar stateRef (\minerState -> do
-        let public = getKeyFromPair Public $ keyPair minerState
         putStrLn "This is your Id, share this one with your friend, so they will know how to send you tokens"
-        print $ hashId minerState--hashFunc public
+        print $ hashId minerState
         return (minerState, ())
         )

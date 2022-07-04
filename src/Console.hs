@@ -8,11 +8,9 @@ module Console where
 
 import Text.Read (readMaybe)
 import Control.Concurrent.MVar
-import qualified Control.Exception as CE 
-import qualified Data.ByteString.Char8 as C8
-import System.IO
+import Data.Time.Clock
 import Network.Socket
-import qualified Data.ByteString.Base64.URL as DBU
+
 import CryptoMagic
 import MinerState
 import TBlock
@@ -25,8 +23,6 @@ import AccountBalance
 import HelpCommand
 import FilesMagic
 import CryptoHandler
-import Data.ByteString
-import Data.Time.Clock
 
 -- | Types of commands.
 data Command

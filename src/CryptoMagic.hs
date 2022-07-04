@@ -10,13 +10,10 @@ module CryptoMagic where
 import Data.Proxy
 import Data.Binary
 import Data.ByteString
-import Data.ByteArray
-import Data.ByteArray.Encoding
 import qualified Data.ByteString as DBS
 import qualified Data.ByteString.Base64.URL as DBU
 import qualified Data.ByteArray as Data
 import qualified Data.ByteString.Char8 as C8
-import qualified Data.ByteString.Lazy as B
 import Crypto.ECC
     ( Curve_P521R1,
       EllipticCurve(curveGenerateKeyPair),
@@ -26,9 +23,6 @@ import Crypto.Hash
 import Crypto.Error
 import Crypto.Random.Types
 import Crypto.PubKey.ECDSA as ECDSA
-import Control.Monad
-import Basement.Compat.Base
-import  Data.Binary.Get
 
 -- | Save of block's hash.
 type BlockHash = Digest SHA1
@@ -106,7 +100,7 @@ verifyStringMsg pub msg sig = unfail failablePoint
 
         unfail :: CryptoFailable (Point Curve_P521R1) -> Bool
         unfail (CryptoPassed point) = verify proxy SHA256 point sig eMsg
-        unfail (CryptoFailed error_) = False
+        unfail (CryptoFailed _error) = False
 
 -- | Makes the signature hashable.
 instance Binary (ECDSA.Signature Curve_P521R1) where

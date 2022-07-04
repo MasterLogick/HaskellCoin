@@ -7,8 +7,8 @@ module Commiter where
 
 import Control.Concurrent.MVar
 import Data.Binary
-
 import Data.ByteString
+
 import CryptoMagic
 import MinerState
 import TBlock
@@ -27,13 +27,13 @@ commitTransaction candidate@(TransactionCandidate sender receiver amount time) s
         let enoughCoins = checkEnoughCoins miner sender amount
         case enoughCoins of
             True -> do
-                modifyMVar stateRef (\miner -> do
-                        let private = getKeyFromPair Private $ keyPair miner
-                        let public = getKeyFromPair Public $ keyPair miner
+                modifyMVar stateRef (\minerState -> do
+                        let private = getKeyFromPair Private $ keyPair minerState
+                        let public = getKeyFromPair Public $ keyPair minerState
                         signature <- signMsg private (toStrict $ encode candidate)
                         let newTransaction = Transaction sender receiver amount time (public, signature)
                         propagateLastPendingTransactionToNet stateRef
-                        return (miner{pendingTransactions = pendingTransactions miner ++ [newTransaction]}, ())
+                        return (minerState{pendingTransactions = pendingTransactions minerState ++ [newTransaction]}, ())
                         )
                 putStrLn  "Transaction is added to pending block and signed."
             False -> 

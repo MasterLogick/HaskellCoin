@@ -111,7 +111,6 @@ instance Binary UTCTime where
         day <- get :: Get Int
         return (UTCTime{ utctDay = toEnum day, utctDayTime = fromRational dayTime })
 
-
 -- | Neccessary type aliases.
 data TransactionCandidate = TransactionCandidate {
     tcSender :: SenderHash,

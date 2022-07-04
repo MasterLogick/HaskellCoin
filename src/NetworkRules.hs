@@ -21,13 +21,13 @@ data SystemState = SystemState [(SenderHash, Amount)] TransList
 -- | check enough coins
 checkEnoughCoins :: MinerState -> SenderHash -> Amount -> Bool
 checkEnoughCoins minerState senderHash amount
-  | userBalance >= amount = True
+  | userBalance' >= amount = True
   | otherwise = False
   where
     pendingTrans = pendingTransactions minerState
     minerBlocks = blocks minerState
     userTransactions = getListTransactions senderHash minerBlocks
-    userBalance = getBalance senderHash minerBlocks (userTransactions ++ pendingTrans)
+    userBalance' = getBalance senderHash minerBlocks (userTransactions ++ pendingTrans)
 
 -- | function checks the presence of a key in the dictionary, 
 -- | in case of absence, adds a new key value, otherwise updates the value of the existing key
@@ -37,9 +37,9 @@ setValue key newVal dict = newDict
     indexElement = DL.elemIndex key (map fst dict)
 
     newDict = case indexElement of
-                Just index -> result
+                Just index' -> result
                   where
-                    (prefix, _: suffix) = DL.splitAt index dict
+                    (prefix, _: suffix) = DL.splitAt index' dict
                     result = prefix ++ ((key, newVal) : suffix)
                 Nothing -> (key, newVal) : dict
 
@@ -47,21 +47,17 @@ setValue key newVal dict = newDict
 -- | check that the transaction is unique (it was not before)
 -- | whether there is enough money for the transaction [Block] -> Transaction -> bool
 validateWholeChain :: [Block] -> TransList -> Bool
-validateWholeChain blocks pendingTrans = result
-  where 
-    result = validateChain (reverse blocks) [] pendingTrans
+validateWholeChain blocks' = validateChain (reverse blocks') []
 
 -- | checking the blockchain for balance, uniqueness of transactions,
 -- | coherence, signature of transactions
 validateChain :: [Block] -> [(SenderHash, Amount)] -> TransList -> Bool
-validateChain blocks uBalance pendingTrans = case validateNonces blocks of
-  False -> False
-  True -> case validateBlocks blocks newState of 
-      Nothing -> False
-      Just state@(SystemState usersBalance transes) -> 
-        case validateTransactions pendingTrans state of
-          Nothing -> False
-          Just _ -> True
+validateChain blocks' uBalance pendingTrans = validateNonces blocks' && (case validateBlocks blocks' newState of
+                                                                     Nothing -> False
+                                                                     Just state@(SystemState _ _) ->
+                                                                       case validateTransactions pendingTrans state of
+                                                                         Nothing -> False
+                                                                         Just _ -> True)
   where
     newState = Just (SystemState uBalance [])
 
@@ -78,57 +74,55 @@ validateBlocks (block: xs) (Just state) = case validateConnection block xs of
       newState = validateBlock block state
 
 validateNonces :: [Block] -> Bool
-validateNonces blocks = all validateBlockNonce blocks
+validateNonces = all validateBlockNonce
 
 -- | supporting function for validateChain
 validateConnection :: Block -> [Block] -> Bool
-validateConnection block1 [] = True
-validateConnection block1 (block2: xs) = if getBlockHash block1 == (bPrevHash block2) then True else False
+validateConnection _ [] = True
+validateConnection block1 (block2: _) = getBlockHash block1 == (bPrevHash block2)
 
 -- | supporting function for validateChain
 validateBlock :: Block -> SystemState -> Maybe SystemState
-validateBlock block state@(SystemState usersBalance transes) = newState
+validateBlock block state@(SystemState _ _) = newState
   where
     tmpState = validateTransactions (bTransList block) state
     newState = case tmpState of
       Nothing -> Nothing
       Just (SystemState usersBalance newTranses) -> Just (SystemState newUsersBalance newTranses)
-        where 
+        where
           newUsersBalance = case lookup (bMinerHash block) usersBalance of
-            Nothing -> setValue (bMinerHash block) reward usersBalance 
-            Just value -> setValue (bMinerHash block) (reward + value) usersBalance 
+            Nothing -> setValue (bMinerHash block) reward usersBalance
+            Just value -> setValue (bMinerHash block) (reward + value) usersBalance
 
 -- | supporting function for validateChain
 validateTransactions :: TransList -> SystemState -> Maybe SystemState
 validateTransactions [] state = Just state
-validateTransactions (transaction: xs) state = 
+validateTransactions (transaction: xs) state =
   case validateTransaction transaction state of
-      Nothing -> Nothing                                               
+      Nothing -> Nothing
       Just newState' -> validateTransactions xs newState'
 
 -- | supporting function for validateChain
 validateTransaction :: Transaction -> SystemState -> Maybe SystemState
-validateTransaction transaction@(Transaction senderHash recvHash amount _ hSignature) (SystemState usersBalance transes) = result
+validateTransaction transaction@(Transaction senderHash recvHash amount _ _) (SystemState usersBalance transes) = result
   where
-    result = case validateTransactionSignature transaction of
-      False -> Nothing
-      True -> case DL.find (\x -> x == transaction) transes of -- check is transaction in list of transactions
-        Just _ -> Nothing
-        Nothing -> case lookup senderHash usersBalance of
-          Nothing -> Nothing
-          Just senderUserBalance -> if senderUserBalance < amount then Nothing else (Just (SystemState newUsersBalance newTranses))
-            where
-              tmpUsersBalance = setValue senderHash (senderUserBalance - amount) usersBalance -- change balance of sender
-              newUsersBalance = case lookup recvHash tmpUsersBalance of -- change balance of recv
-                Nothing -> setValue recvHash amount tmpUsersBalance
-                Just recvUserBalance -> setValue recvHash (amount + recvUserBalance) tmpUsersBalance
-              newTranses = transaction : transes
+    result = if validateTransactionSignature transaction then (case DL.find (== transaction) transes of -- check is transaction in list of transactions
+                                                         Just _ -> Nothing
+                                                         Nothing -> case lookup senderHash usersBalance of
+                                                           Nothing -> Nothing
+                                                           Just senderUserBalance -> if senderUserBalance < amount then Nothing else (Just (SystemState newUsersBalance newTranses))
+                                                             where
+                                                               tmpUsersBalance = setValue senderHash (senderUserBalance - amount) usersBalance -- change balance of sender
+                                                               newUsersBalance = case lookup recvHash tmpUsersBalance of -- change balance of recv
+                                                                 Nothing -> setValue recvHash amount tmpUsersBalance
+                                                                 Just recvUserBalance -> setValue recvHash (amount + recvUserBalance) tmpUsersBalance
+                                                               newTranses = transaction : transes) else Nothing
 
 -- | gets a nonсe
 genNonces :: Block -> [Block]
-genNonces (Block prevHash minerId _ trans transList) = blocks
+genNonces (Block prevHash minerId _ trans transList) = blocks'
     where
-        blocks = map compueWithNonce [0,1..]
+        blocks' = map compueWithNonce [0,1..]
         compueWithNonce :: Nonce -> Block
         compueWithNonce nonce =
             Block prevHash minerId nonce trans transList
@@ -165,13 +159,13 @@ preliminaryJudgeBlock minerState newBlock =
 
 -- | Tells if present chain part should be preserved instead of rebasing to incoming part
 canPreserveLocalChainPart :: [Block] -> [Block] -> Bool
-canPreserveLocalChainPart [] present = True
-canPreserveLocalChainPart incoming [] = False
-canPreserveLocalChainPart incoming present =
-    if (length incoming) > (length present) then False
-    else if (length incoming) < (length present) then True
-    else if (getBlockHash (head incoming)) < (getBlockHash (head present)) then False
-    else True
+canPreserveLocalChainPart [] _ = True
+canPreserveLocalChainPart _ [] = False
+canPreserveLocalChainPart incoming present
+  | (length incoming) > (length present) = False
+  | (length incoming) < (length present) = True
+  | (getBlockHash (head incoming)) < (getBlockHash (head present)) = False
+  | otherwise = True
 
 -- | Selects chain from present chain and incoming full chain of part of incoming chain with some common block(s) in the oldest
 selectChain :: [Block] -> [Block] -> Either [Block] [Block]
