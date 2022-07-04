@@ -247,6 +247,7 @@ handleNewBlock stateRef user = do
                     return (minerState, True)
             )
 
+-- | Resolves branch divergence conflicts
 resolveBranchDivergence :: NetUser -> MVar MinerState -> IO ()
 resolveBranchDivergence user stateRef = do
     _ <- forkIO $ withService stateRef user $ do
@@ -361,6 +362,7 @@ sendBlock stateRef block user = withService stateRef user $ do
     peerName <- safeGetPeerName (nuSocket user)
     putStrLn ("Sent block to " ++ peerName)
 
+-- | Fetches the specified block from the user
 requestBlock :: NetUser -> BlockHash -> IO (Maybe Block)
 requestBlock user hash = do
     sendAll (nuSocket user) (encode ("Gimme block" :: String))
@@ -400,14 +402,11 @@ requestLastBlockHash stateRef user = withService stateRef user $ do
     sendAll (nuSocket user) (encode ("Gimme last hash" :: String))
     receive user :: IO (Maybe BlockHash)
 
+-- | Fetches the list of pending transactions form the user
 requestTransList :: NetUser -> IO (Maybe [Transaction])
 requestTransList user = do
     sendAll (nuSocket user) (encode ("Gimme pend trans" :: String))
     receive user :: IO (Maybe [Transaction])
-
--- check block in read from file
--- remove incoming tras if it is in chain
-
 
 -- | Internal state management functions.
 -- | Waits until the user is free for servicing and services it.
@@ -457,6 +456,7 @@ receive user = do
                         Right (remainder, _, parsedVal) -> return (remainder, return (Just parsedVal))
                     )
 
+-- | Gets the peer name of the socket
 safeGetPeerName :: Socket -> IO String
 safeGetPeerName sock = do
     mPeerName <- try (getPeerName sock) :: IO (Either SomeException SockAddr)
