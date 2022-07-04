@@ -1,13 +1,13 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.6.
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 028237fcd0a336a6c8dea16fd82efccecc79e489eb08876a8f72b2c246f00600
+-- hash: 4e261a1b0f139f875d4f4998bfdf36dc66063b7870e7c87a6f1a7acb9e2dd35e
 
 name:           HaskellCoin
-version:        0.0.1.0
+version:        1.0.0.0
 description:    Yet another blockchain but written in Haskell this time
 homepage:       https://github.com/MasterLogick/HaskellCoin#readme
 bug-reports:    https://github.com/MasterLogick/HaskellCoin/issues
