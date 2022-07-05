@@ -18,7 +18,7 @@ import Prompts
 import Commiter
 import Sender
 import Explorer
-import NetworkMagic
+import NetworkManagement
 import AccountBalance
 import HelpCommand
 import FilesMagic

@@ -11,7 +11,7 @@ import Data.Maybe
 import MinerState
 import TBlock
 import CryptoMagic
-import NetworkMagic
+import NetworkManagement
 import NetworkRules
 
 -- | Function buildAndSendToNet builds and sends a block into the network

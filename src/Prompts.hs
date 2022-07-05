@@ -17,7 +17,7 @@ import System.IO
 import CryptoHandler
 import CryptoMagic
 import FilesMagic
-import NetworkMagic
+import NetworkManagement
 
 data ResponceJudgement = Accepted | Reject | WrongResponce | Default
 

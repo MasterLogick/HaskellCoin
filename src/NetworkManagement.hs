@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Redundant bracket" #-}
-module NetworkMagic where
+module NetworkManagement where
 
 import Control.Concurrent
 import Control.Monad

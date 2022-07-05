@@ -11,7 +11,7 @@ import qualified Data.ByteString.Lazy as LB
     
 import MinerState
 import NetworkRules
-import NetworkMagic
+import NetworkManagement
 
 
 type Path = String

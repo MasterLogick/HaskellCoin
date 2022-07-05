@@ -13,7 +13,7 @@ import CryptoMagic
 import MinerState
 import TBlock
 import NetworkRules
-import NetworkMagic
+import NetworkManagement
 
 -- | Adds new transaction to pending block.
 commitTransaction :: TransactionCandidate -> Handler
