@@ -39,6 +39,16 @@ fallbackBlock = Block fallbackHash fallbackHash 0 0 []
 getBlockHash :: Block -> BlockHash
 getBlockHash b = hashFunc (LB.toStrict (encode b))
 
+instance Show Block where
+    show block =
+        "Block: " ++ (show (getBlockHash block)) ++ "\n" ++
+        "Miner: " ++ (show (bMinerHash block)) ++ "\n" ++
+        "Nonce: " ++ (show (bNonce block)) ++ "\n" ++
+        "Transactions: \n" ++
+        transList ++
+        "Previous block: " ++ (show (bPrevHash block))
+       where
+            transList = foldMap (\trans -> "    " ++ (show trans) ++ "\n") (bTransList block)
 -- | This instance is neccessary for converting block into bytes and also bytes into data block.               
 instance Binary Block where
     put (Block prevHash minerHash nonce transCount transList) = do
@@ -67,7 +77,11 @@ data Transaction = Transaction {
     tAmount :: Amount,
     tTime :: UTCTime,
     tSignature :: HSignature
-} deriving (Eq, Show)
+} deriving (Eq)
+
+instance Show Transaction where
+    show transcation = (show (tSender transcation)) ++ " -> " ++ (show (tReceiver transcation)) ++ 
+        " | " ++ (show (tAmount transcation)) ++ " | " ++ (show (tTime transcation))
 
 -- | This instance is neccessary for converting transactions into bytes and also bytes into data block.
 instance Binary TransactionCandidate where
