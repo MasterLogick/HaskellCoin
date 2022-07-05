@@ -39,6 +39,7 @@ data Command
     | ShowPair
     | Id
     | Help
+    | PrintPending
 
 -- | Exits from programm.
 handleExit_ :: Handler
@@ -64,6 +65,7 @@ handleCommand command = case command of
   ShowPair -> printPair
   Id -> getId
   Help -> printHelp
+  PrintPending -> printPending
 
 
 -- | Parses command.
@@ -77,6 +79,7 @@ parseCommand sender time input =
         "key"  -> Just ShowPair
         "id" -> Just Id
         "help" -> Just Help
+        "pending" -> Just PrintPending
         _ ->
             case words input of
                 ["commit", id_reciver, amt] -> 
